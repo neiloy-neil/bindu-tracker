@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -22,6 +22,12 @@ export default function DispatchTab({
   const supabase = createClient()
   const [map, setMap] = useState<DispatchMap>(emptyMap)
   const [loading, setLoading] = useState(true)
+  const [dispatchReady, setDispatchReady] = useState<number | null>(null)
+
+  useEffect(() => {
+    supabase.from('finishing').select('dispatch_ready_qty').eq('product_id', productId).maybeSingle()
+      .then(({ data }) => { if (data) setDispatchReady(data.dispatch_ready_qty) })
+  }, [productId, supabase])
 
   useEffect(() => {
     supabase.from('branch_dispatch').select('*').eq('product_id', productId)
@@ -85,11 +91,16 @@ export default function DispatchTab({
 
   return (
     <div className="p-4 overflow-x-auto">
-      <div className="mb-3 flex items-center gap-2 text-xs text-slate-500">
-        <span className="inline-flex items-center gap-1 border border-dashed border-slate-300 rounded px-2 py-0.5 bg-slate-50">
-          Auto
+      <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+        <span className="inline-flex items-center gap-1">
+          <span className="border border-dashed border-slate-300 rounded px-2 py-0.5 bg-slate-50">Auto</span>
+          Dispatch 1 is auto-synced from the Daily Entry Sheet. Edit dispatches 2 &amp; 3 manually.
         </span>
-        <span>Dispatch 1 is auto-synced from the Daily Entry Sheet. Edit dispatches 2 &amp; 3 manually.</span>
+        {dispatchReady !== null && dispatchReady > 0 && (
+          <span className="ml-auto inline-flex items-center gap-1 rounded bg-purple-50 border border-purple-200 px-2 py-0.5 text-purple-700 font-medium">
+            {dispatchReady.toLocaleString()} pcs dispatch-ready (from Finishing)
+          </span>
+        )}
       </div>
 
       <table className="text-xs border-collapse w-full min-w-max">
@@ -112,10 +123,10 @@ export default function DispatchTab({
             <th className="px-2 py-1 text-slate-400 font-normal border-l border-slate-200 min-w-[120px]">Date</th>
             <th className="px-2 py-1 text-slate-400 font-normal min-w-[64px]">QTY</th>
             {[1, 2].map(n => (
-              <>
-                <th key={`dh${n}`} className="px-2 py-1 text-slate-400 font-normal border-l border-slate-200 min-w-[120px]">Date</th>
-                <th key={`qh${n}`} className="px-2 py-1 text-slate-400 font-normal min-w-[64px]">QTY</th>
-              </>
+              <React.Fragment key={n}>
+                <th className="px-2 py-1 text-slate-400 font-normal border-l border-slate-200 min-w-[120px]">Date</th>
+                <th className="px-2 py-1 text-slate-400 font-normal min-w-[64px]">QTY</th>
+              </React.Fragment>
             ))}
             <th></th>
           </tr>
@@ -148,8 +159,8 @@ export default function DispatchTab({
 
               {/* Slots 1 & 2 (dispatch_no=2,3) — manual */}
               {([1, 2] as const).map(si => (
-                <>
-                  <td key={`d${branch}${si}`} className="px-1 py-1 border-l border-slate-100">
+                <React.Fragment key={si}>
+                  <td className="px-1 py-1 border-l border-slate-100">
                     <input
                       type="date"
                       className={inputCls + ' w-28'}
@@ -157,7 +168,7 @@ export default function DispatchTab({
                       onChange={e => updateSlot(branch, si, 'dispatch_date', e.target.value || null)}
                     />
                   </td>
-                  <td key={`q${branch}${si}`} className="px-1 py-1">
+                  <td className="px-1 py-1">
                     <input
                       type="number" min={0}
                       className={inputCls + ' w-16 text-right'}
@@ -166,7 +177,7 @@ export default function DispatchTab({
                       onChange={e => updateSlot(branch, si, 'qty', parseInt(e.target.value) || 0)}
                     />
                   </td>
-                </>
+                </React.Fragment>
               ))}
 
               <td className="px-3 py-1.5 text-right font-semibold border-l border-slate-200 text-slate-700">
