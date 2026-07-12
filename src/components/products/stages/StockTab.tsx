@@ -95,7 +95,7 @@ export default function StockTab({ productId }: { productId: string }) {
                     placeholder="0"
                     onChange={e => setData(d => ({ ...d, [`color_${n}_qty`]: parseInt(e.target.value)||0 }))}
                     onFocus={e => e.target.select()}
-                    onBlur={() => save(data)}
+                    onBlur={e => { const u = { ...data, [`color_${n}_qty`]: parseInt(e.target.value)||0 }; setData(u); save(u) }}
                   />
                 </td>
               </tr>
