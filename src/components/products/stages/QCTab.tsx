@@ -11,6 +11,7 @@ import type { ProductStage, QcStatus } from '@/types/app'
 
 type QCRow = {
   product_id: string
+  start_date: string | null
   in_qty: number
   out_qty: number
   reject_qty: number
@@ -20,7 +21,7 @@ type QCRow = {
 }
 
 const EMPTY = (productId: string): QCRow => ({
-  product_id: productId, in_qty: 0, out_qty: 0,
+  product_id: productId, start_date: null, in_qty: 0, out_qty: 0,
   reject_qty: 0, alter_qty: 0, spot_qty: 0, status: null,
 })
 
@@ -95,6 +96,14 @@ export default function QCTab({
           Quantities marked <strong>auto-synced</strong> are computed from the Daily Entry Sheet and cannot be edited here.
         </div>
       )}
+
+      <Field label="Start Date">
+        <input type="date"
+          className="border rounded px-2 py-1 text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-400"
+          value={data.start_date ?? ''}
+          onChange={e => setData(d => ({ ...d, start_date: e.target.value || null }))}
+          onBlur={e => { const v = e.target.value || null; const u = { ...data, start_date: v }; setData(u); save(u) }} />
+      </Field>
 
       <Field label="Status">
         <Select value={data.status ?? ''} onValueChange={v => set('status', v as QcStatus || null)}>

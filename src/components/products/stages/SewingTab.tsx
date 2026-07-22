@@ -13,13 +13,16 @@ import VendorSelect from '@/components/vendors/VendorSelect'
 type SewRow = {
   product_id: string
   vendor_name: string | null
+  sending_date: string | null
   out_qty: number
   in_qty: number
+  short_qty: number
   status: SewStatus | null
 }
 
 const EMPTY = (productId: string): SewRow => ({
-  product_id: productId, vendor_name: null, out_qty: 0, in_qty: 0, status: null,
+  product_id: productId, vendor_name: null, sending_date: null,
+  out_qty: 0, in_qty: 0, short_qty: 0, status: null,
 })
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -92,6 +95,12 @@ export default function SewingTab({
         />
       </Field>
 
+      <Field label="Sending Date">
+        <input type="date" className={inputCls + ' w-44'} value={data.sending_date ?? ''}
+          onChange={e => setData(d => ({ ...d, sending_date: e.target.value || null }))}
+          onBlur={e => { const v = e.target.value || null; const u = { ...data, sending_date: v }; setData(u); save(u) }} />
+      </Field>
+
       <Field label="Status">
         <Select value={data.status ?? ''} onValueChange={v => set('status', v as SewStatus || null)}>
           <SelectTrigger className="w-40 h-8 text-sm"><SelectValue placeholder="Select status" /></SelectTrigger>
@@ -118,6 +127,13 @@ export default function SewingTab({
             onChange={e => setData(d => ({ ...d, in_qty: parseInt(e.target.value)||0 }))}
             onBlur={e => { const v = parseInt(e.target.value)||0; const u = { ...data, in_qty: v }; setData(u); save(u) }} />
         )}
+      </Field>
+
+      <Field label="Short (QTY)">
+        <input type="number" min={0} className={inputCls + ' w-28 text-right'} value={data.short_qty || ''}
+          placeholder="0"
+          onChange={e => setData(d => ({ ...d, short_qty: parseInt(e.target.value)||0 }))}
+          onBlur={e => { const v = parseInt(e.target.value)||0; const u = { ...data, short_qty: v }; setData(u); save(u) }} />
       </Field>
 
       <Field label="Still at Sewing">

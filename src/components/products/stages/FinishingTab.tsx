@@ -9,6 +9,8 @@ import type { ProductStage } from '@/types/app'
 
 type FinishingData = {
   product_id: string
+  start_date: string | null
+  completed_date: string | null
   received_qty: number
   ironing_qty: number
   folding_qty: number
@@ -18,6 +20,7 @@ type FinishingData = {
 
 const EMPTY = (productId: string): FinishingData => ({
   product_id: productId,
+  start_date: null, completed_date: null,
   received_qty: 0, ironing_qty: 0, folding_qty: 0, dispatch_ready_qty: 0, notes: null,
 })
 
@@ -96,6 +99,25 @@ export default function FinishingTab({
         </div>
       )}
       <p className="text-xs text-slate-500">Track pieces through each finishing operation. Each field auto-saves on blur.</p>
+
+      <div className="flex flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-slate-700 w-32">Start Date</label>
+          <input type="date"
+            className="border rounded px-3 py-2 text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-400"
+            value={data.start_date ?? ''}
+            onChange={e => setData(d => ({ ...d, start_date: e.target.value || null }))}
+            onBlur={e => { const u = { ...data, start_date: e.target.value || null }; setData(u); save(u) }} />
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-slate-700 w-36">Completed Date</label>
+          <input type="date"
+            className="border rounded px-3 py-2 text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-400"
+            value={data.completed_date ?? ''}
+            onChange={e => setData(d => ({ ...d, completed_date: e.target.value || null }))}
+            onBlur={e => { const u = { ...data, completed_date: e.target.value || null }; setData(u); save(u) }} />
+        </div>
+      </div>
 
       <div className="space-y-3">
         <NumField

@@ -11,6 +11,7 @@ import type { ProductStage } from '@/types/app'
 type CuttingRow = {
   id?: string
   product_id: string
+  start_date: string | null
   color_1_name: string | null; color_1_qty: number
   color_2_name: string | null; color_2_qty: number
   color_3_name: string | null; color_3_qty: number
@@ -22,6 +23,7 @@ type CuttingRow = {
 
 const EMPTY = (productId: string): CuttingRow => ({
   product_id: productId,
+  start_date: null,
   color_1_name: null, color_1_qty: 0,
   color_2_name: null, color_2_qty: 0,
   color_3_name: null, color_3_qty: 0,
@@ -87,6 +89,16 @@ export default function CuttingTab({
 
   return (
     <div className="p-4 space-y-4">
+      <div className="flex items-center gap-3">
+        <label className="text-sm text-slate-600 w-24">Start Date</label>
+        <input
+          type="date"
+          value={data.start_date ?? ''}
+          className="border rounded px-2 py-1 text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-400"
+          onChange={e => setData(d => ({ ...d, start_date: e.target.value || null }))}
+          onBlur={e => { const u = { ...data, start_date: e.target.value || null }; setData(u); save(u) }}
+        />
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
