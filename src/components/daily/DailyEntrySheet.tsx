@@ -168,12 +168,11 @@ export default function DailyEntrySheet() {
   }
 
   const addRow = async () => {
-    if (!branchId) { toast.error('Select a branch first'); return }
     if (entries.length >= MAX_DAILY_ENTRIES) { toast.error(`Max ${MAX_DAILY_ENTRIES} entries per day`); return }
     const { data: { user } } = await supabase.auth.getUser()
     const { data, error } = await supabase
       .from('production_entries')
-      .insert({ ...EMPTY_ROW, entry_date: date, design_code: '', branch_id: branchId, created_by: user?.id })
+      .insert({ ...EMPTY_ROW, entry_date: date, design_code: '', branch_id: branchId ?? null, created_by: user?.id })
       .select().single()
     if (error) { toast.error('Failed to add row'); return }
     setEntries(prev => [...prev, data])
@@ -228,9 +227,8 @@ export default function DailyEntrySheet() {
           ? <span className="inline-flex items-center gap-1 text-xs font-medium text-sky-700 bg-sky-50 border border-sky-200 rounded px-2 py-0.5">
               <Store className="h-3 w-3" />{selectedBranch}
             </span>
-          : <span className="inline-flex items-center gap-2 text-sm font-semibold text-amber-700 bg-amber-50 border-2 border-amber-400 rounded-lg px-3 py-1.5">
-              <Store className="h-4 w-4" />
-              ← Select a branch from the dropdown in the top-right corner to start entering data
+          : <span className="inline-flex items-center gap-1 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded px-2 py-0.5">
+              <Store className="h-3 w-3" /> Select a branch above to filter entries by branch
             </span>
         }
         <span className="ml-auto text-xs text-slate-400 flex items-center gap-2">
@@ -240,13 +238,13 @@ export default function DailyEntrySheet() {
       </div>
 
       {/* How-to tip */}
-      {!selectedBranch && (
+      {entries.length === 0 && (
         <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-800 space-y-1">
           <p className="font-semibold">How to use the Daily Entry Sheet</p>
           <ol className="list-decimal list-inside space-y-0.5 text-blue-700 text-xs">
-            <li>Select your branch from the dropdown in the top-right corner</li>
             <li>Pick the date using the arrow buttons or the date field above</li>
             <li>Click <strong>Add design code</strong> to add a row for each product worked on today</li>
+            <li>Set the branch in each row using the Branch column</li>
             <li>Fill in quantities for each stage — numbers save automatically when you move to the next cell</li>
           </ol>
         </div>
