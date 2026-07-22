@@ -9,6 +9,7 @@ import { SEW_STATUS } from '@/constants'
 import { refreshProductStage } from '@/lib/utils/stageAdvance'
 import type { ProductStage, SewStatus } from '@/types/app'
 import VendorSelect from '@/components/vendors/VendorSelect'
+import ColorQtyGrid from './ColorQtyGrid'
 
 type SewRow = {
   product_id: string
@@ -17,13 +18,20 @@ type SewRow = {
   out_qty: number
   in_qty: number
   short_qty: number
+  recv_color_1_qty: number; recv_color_2_qty: number; recv_color_3_qty: number
+  recv_color_4_qty: number; recv_color_5_qty: number; recv_color_6_qty: number
   status: SewStatus | null
 }
 
 const EMPTY = (productId: string): SewRow => ({
   product_id: productId, vendor_name: null, sending_date: null,
-  out_qty: 0, in_qty: 0, short_qty: 0, status: null,
+  out_qty: 0, in_qty: 0, short_qty: 0,
+  recv_color_1_qty: 0, recv_color_2_qty: 0, recv_color_3_qty: 0,
+  recv_color_4_qty: 0, recv_color_5_qty: 0, recv_color_6_qty: 0,
+  status: null,
 })
+
+type CuttingColors = Array<{ name: string | null }>
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -48,14 +56,18 @@ export default function SewingTab({
 }: { productId: string; onStageChange: (s: ProductStage) => void; hasLinkedEntries?: boolean }) {
   const supabase = createClient()
   const [data, setData] = useState<SewRow>(EMPTY(productId))
+  const [cuttingColors, setCuttingColors] = useState<CuttingColors>(Array.from({ length: 6 }, () => ({ name: null })))
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.from('sewing').select('*').eq('product_id', productId).maybeSingle()
-      .then(({ data: row }) => {
-        if (row) setData(row as SewRow)
-        setLoading(false)
-      })
+    Promise.all([
+      supabase.from('sewing').select('*').eq('product_id', productId).maybeSingle(),
+      supabase.from('cutting').select('color_1_name,color_2_name,color_3_name,color_4_name,color_5_name,color_6_name').eq('product_id', productId).maybeSingle(),
+    ]).then(([{ data: row }, { data: cut }]) => {
+      if (row) setData(row as SewRow)
+      if (cut) setCuttingColors([1,2,3,4,5,6].map(n => ({ name: (cut as Record<string,string|null>)[`color_${n}_name`] })))
+      setLoading(false)
+    })
   }, [productId, supabase])
 
   const pending = (data.out_qty ?? 0) - (data.in_qty ?? 0)
@@ -141,6 +153,20 @@ export default function SewingTab({
           {pending} pcs
         </Badge>
       </Field>
+
+      <div className="py-2">
+        <ColorQtyGrid
+          label="Received by Color"
+          colors={cuttingColors}
+          values={[1,2,3,4,5,6].map(n => data[`recv_color_${n}_qty` as keyof SewRow] as number)}
+          readOnly={hasLinkedEntries}
+          onChange={(i, qty) => {
+            const field = `recv_color_${i + 1}_qty` as keyof SewRow
+            const u = { ...data, [field]: qty }
+            setData(u); save(u)
+          }}
+        />
+      </div>
     </div>
   )
 }

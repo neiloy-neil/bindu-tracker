@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { refreshProductStage } from '@/lib/utils/stageAdvance'
 import type { ProductStage } from '@/types/app'
+import ColorQtyGrid from './ColorQtyGrid'
 
 type FinishingData = {
   product_id: string
@@ -15,14 +16,21 @@ type FinishingData = {
   ironing_qty: number
   folding_qty: number
   dispatch_ready_qty: number
+  in_color_1_qty: number; in_color_2_qty: number; in_color_3_qty: number
+  in_color_4_qty: number; in_color_5_qty: number; in_color_6_qty: number
   notes: string | null
 }
 
 const EMPTY = (productId: string): FinishingData => ({
   product_id: productId,
   start_date: null, completed_date: null,
-  received_qty: 0, ironing_qty: 0, folding_qty: 0, dispatch_ready_qty: 0, notes: null,
+  received_qty: 0, ironing_qty: 0, folding_qty: 0, dispatch_ready_qty: 0,
+  in_color_1_qty: 0, in_color_2_qty: 0, in_color_3_qty: 0,
+  in_color_4_qty: 0, in_color_5_qty: 0, in_color_6_qty: 0,
+  notes: null,
 })
+
+type CuttingColors = Array<{ name: string | null }>
 
 function NumField({ label, value, onChange, onBlur, readOnly, syncedBadge }: {
   label: string; value: number
@@ -66,14 +74,18 @@ export default function FinishingTab({
 }: { productId: string; onStageChange: (s: ProductStage) => void; hasLinkedEntries?: boolean }) {
   const supabase = createClient()
   const [data, setData] = useState<FinishingData>(EMPTY(productId))
+  const [cuttingColors, setCuttingColors] = useState<CuttingColors>(Array.from({ length: 6 }, () => ({ name: null })))
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.from('finishing').select('*').eq('product_id', productId).maybeSingle()
-      .then(({ data: row }) => {
-        if (row) setData({ ...EMPTY(productId), ...row })
-        setLoading(false)
-      })
+    Promise.all([
+      supabase.from('finishing').select('*').eq('product_id', productId).maybeSingle(),
+      supabase.from('cutting').select('color_1_name,color_2_name,color_3_name,color_4_name,color_5_name,color_6_name').eq('product_id', productId).maybeSingle(),
+    ]).then(([{ data: row }, { data: cut }]) => {
+      if (row) setData({ ...EMPTY(productId), ...row })
+      if (cut) setCuttingColors([1,2,3,4,5,6].map(n => ({ name: (cut as Record<string,string|null>)[`color_${n}_name`] })))
+      setLoading(false)
+    })
   }, [productId, supabase])
 
   const save = async (updated: FinishingData) => {
@@ -125,6 +137,17 @@ export default function FinishingTab({
           readOnly={hasLinkedEntries} syncedBadge={hasLinkedEntries}
           onChange={v => setData(d => ({ ...d, received_qty: v }))}
           onBlur={v => { const u = { ...data, received_qty: v }; setData(u); save(u) }}
+        />
+        <ColorQtyGrid
+          label="Received by Color"
+          colors={cuttingColors}
+          values={[1,2,3,4,5,6].map(n => data[`in_color_${n}_qty` as keyof FinishingData] as number)}
+          readOnly={hasLinkedEntries}
+          onChange={(i, qty) => {
+            const field = `in_color_${i + 1}_qty` as keyof FinishingData
+            const u = { ...data, [field]: qty }
+            setData(u); save(u)
+          }}
         />
         <NumField label="After Ironing" value={data.ironing_qty}
           onChange={v => setData(d => ({ ...d, ironing_qty: v }))}
