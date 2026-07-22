@@ -94,7 +94,6 @@ export default function DispatchTab({
   }, [loading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const inputCls = 'border rounded px-1 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400'
-  const readonlyCls = 'border rounded px-1 py-0.5 text-xs bg-slate-50 text-slate-500 cursor-not-allowed border-dashed'
 
   if (loading) return (
     <div className="p-4 space-y-2">
@@ -104,14 +103,11 @@ export default function DispatchTab({
 
   const branchesWithData = BRANCHES.filter(b => branchTotal(b) > 0)
   const branchesEmpty = BRANCHES.filter(b => branchTotal(b) === 0)
+  const overDispatched = dispatchReady !== null && grandTotal > dispatchReady
 
   return (
     <div className="p-4 space-y-3">
       <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
-        <span className="inline-flex items-center gap-1">
-          <span className="border border-dashed border-slate-300 rounded px-2 py-0.5 bg-slate-50">Auto</span>
-          1st Dispatch is filled automatically from the Daily Entry Sheet. Add 2nd &amp; 3rd dispatch dates manually if needed.
-        </span>
         {dispatchReady !== null && dispatchReady > 0 && (
           <span className="ml-auto inline-flex items-center gap-1 rounded bg-purple-50 border border-purple-200 px-2 py-0.5 text-purple-700 font-medium">
             {dispatchReady.toLocaleString()} pcs ready to dispatch (from Finishing)
@@ -119,16 +115,18 @@ export default function DispatchTab({
         )}
       </div>
 
+      {overDispatched && (
+        <div className="rounded-md bg-red-50 border border-red-300 px-3 py-2 text-xs text-red-700 font-medium">
+          Warning: Total dispatched ({grandTotal.toLocaleString()} pcs) exceeds the {dispatchReady!.toLocaleString()} pcs marked ready in Finishing. Please check your quantities.
+        </div>
+      )}
+
       <div className="rounded-lg border border-slate-200 overflow-hidden">
         <table className="text-xs border-collapse w-full min-w-max">
           <thead>
             <tr className="bg-slate-100">
               <th className="text-left px-3 py-2 font-semibold text-slate-600 w-36">Branch</th>
-              <th colSpan={2} className="text-center px-2 py-2 font-semibold text-slate-400 border-l border-slate-200 bg-slate-50">
-                1st Dispatch
-                <span className="ml-1 text-[10px] font-normal border border-dashed border-slate-300 rounded px-1">Auto</span>
-              </th>
-              {(['2nd Dispatch', '3rd Dispatch'] as const).map(label => (
+              {(['1st Dispatch', '2nd Dispatch', '3rd Dispatch'] as const).map(label => (
                 <th key={label} colSpan={2} className="text-center px-2 py-2 font-semibold text-slate-600 border-l border-slate-200">
                   {label}
                 </th>
@@ -151,13 +149,7 @@ export default function DispatchTab({
             {branchesWithData.map((branch, bi) => (
               <tr key={branch} className={bi % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
                 <td className="px-3 py-1.5 font-semibold text-slate-700">{branch}</td>
-                <td className="px-1 py-1 border-l border-slate-100">
-                  <input type="date" readOnly className={readonlyCls + ' w-28'} value={map[branch][0].dispatch_date ?? ''} title="Auto-synced from Daily Entry Sheet" />
-                </td>
-                <td className="px-1 py-1">
-                  <input type="number" readOnly className={readonlyCls + ' w-16 text-right'} value={map[branch][0].qty || ''} placeholder="0" title="Auto-synced" />
-                </td>
-                {([1, 2] as const).map(si => (
+                {([0, 1, 2] as const).map(si => (
                   <React.Fragment key={si}>
                     <td className="px-1 py-1 border-l border-slate-100">
                       <input type="date" className={inputCls + ' w-28'} value={map[branch][si].dispatch_date ?? ''} onChange={e => updateSlot(branch, si, 'dispatch_date', e.target.value || null)} />
@@ -198,13 +190,7 @@ export default function DispatchTab({
                 {branchesEmpty.filter(b => expandedBranches.has(b)).map((branch, bi) => (
                   <tr key={branch} className={bi % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
                     <td className="px-3 py-1.5 font-medium text-slate-500">{branch}</td>
-                    <td className="px-1 py-1 border-l border-slate-100">
-                      <input type="date" readOnly className={readonlyCls + ' w-28'} value={map[branch][0].dispatch_date ?? ''} title="Auto-synced" />
-                    </td>
-                    <td className="px-1 py-1">
-                      <input type="number" readOnly className={readonlyCls + ' w-16 text-right'} value={map[branch][0].qty || ''} placeholder="0" title="Auto-synced" />
-                    </td>
-                    {([1, 2] as const).map(si => (
+                    {([0, 1, 2] as const).map(si => (
                       <React.Fragment key={si}>
                         <td className="px-1 py-1 border-l border-slate-100">
                           <input type="date" className={inputCls + ' w-28'} value={map[branch][si].dispatch_date ?? ''} onChange={e => updateSlot(branch, si, 'dispatch_date', e.target.value || null)} />
@@ -221,10 +207,13 @@ export default function DispatchTab({
             )}
           </tbody>
           <tfoot>
-            <tr className="bg-slate-700 text-white font-semibold">
+            <tr className={`font-semibold ${overDispatched ? 'bg-red-700' : 'bg-slate-700'} text-white`}>
               <td className="px-3 py-2">Grand Total</td>
               <td colSpan={6}></td>
-              <td className="px-3 py-2 text-right text-sm">{grandTotal.toLocaleString()} pcs</td>
+              <td className="px-3 py-2 text-right text-sm">
+                {grandTotal.toLocaleString()} pcs
+                {overDispatched && <span className="ml-1 text-red-200">⚠ over limit</span>}
+              </td>
             </tr>
           </tfoot>
         </table>

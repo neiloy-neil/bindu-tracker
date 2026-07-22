@@ -210,7 +210,7 @@ export default function ProductDetail({
             <p className="text-xs text-slate-500">Follow the steps in order. The current stage is highlighted. Fill in the details for the active step, then move on.</p>
           </div>
           <Tabs defaultValue={currentStage.toLowerCase() === 'dispatched' ? 'dispatch' : currentStage.toLowerCase()}>
-            <TabsList className="w-full justify-start overflow-x-auto bg-white border shadow-sm gap-0 p-0 h-auto rounded-lg">
+            <TabsList className="w-full grid grid-cols-7 bg-white border shadow-sm gap-0 p-0 h-auto rounded-lg">
               {([
                 { value: 'cutting',  label: 'Cutting',  step: 1, stage: 'Cutting' },
                 { value: 'printing', label: 'Printing', step: 2, stage: 'Printing' },
