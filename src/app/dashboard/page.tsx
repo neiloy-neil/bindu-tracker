@@ -125,6 +125,31 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {/* Quick-start guide — shown only when no products exist */}
+      {allProducts.length === 0 && (
+        <div className="rounded-xl bg-blue-50 border border-blue-200 p-5 space-y-3">
+          <p className="font-semibold text-blue-800 text-sm">Welcome! Here&apos;s how to get started</p>
+          <ol className="space-y-2">
+            {[
+              { step: 1, title: 'Add a Product', desc: 'Go to Products → New Product. Enter the design code, name, target quantity, and dispatch date.', href: '/dashboard/products/new', cta: 'Add your first product →' },
+              { step: 2, title: 'Fill in Cutting Details', desc: 'Open the product and go to Step 1 — Cutting. Enter color names and quantities cut.', href: null, cta: null },
+              { step: 3, title: 'Record Daily Work', desc: 'Each day, go to Daily Entry, select your branch, and fill in today\'s numbers for each design code.', href: '/dashboard/daily', cta: 'Open Daily Entry →' },
+              { step: 4, title: 'Track Progress', desc: 'Use Pipeline to see all active designs and their current stage at a glance.', href: '/dashboard/pipeline', cta: 'Open Pipeline →' },
+            ].map(({ step, title, desc, href, cta }) => (
+              <li key={step} className="flex items-start gap-3 text-sm text-blue-700">
+                <span className="mt-0.5 flex-shrink-0 font-bold bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">{step}</span>
+                <span>
+                  <strong>{title}:</strong> {desc}
+                  {href && cta && (
+                    <Link href={href} className="ml-2 underline font-medium text-blue-800 hover:text-blue-900">{cta}</Link>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
       {/* At-risk alert panel */}
       {atRiskProducts.length > 0 && (
         <div className="mb-8">

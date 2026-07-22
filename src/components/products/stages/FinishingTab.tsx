@@ -107,7 +107,7 @@ export default function FinishingTab({
     <div className="p-5 space-y-5 max-w-sm">
       {hasLinkedEntries && (
         <div className="rounded-md bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">
-          <strong>Received into Finishing</strong> is auto-synced from the Daily Entry Sheet.
+          <strong>Received into Finishing</strong> is filled automatically from your Daily Entry Sheet. You don&apos;t need to enter it here.
         </div>
       )}
       <p className="text-xs text-slate-500">Track pieces through each finishing operation. Each field auto-saves on blur.</p>

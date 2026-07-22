@@ -97,13 +97,13 @@ export default function PipelineBoard() {
             <tr className="bg-slate-50 border-b">
               <th className={th}>Code</th>
               <th className={th}>Name</th>
-              <th className={th}>Stage</th>
-              <th className={th + ' text-right text-blue-600'}>Cut</th>
-              <th className={th + ' text-right text-green-600'}>QC Out</th>
+              <th className={th}>Current Stage</th>
+              <th className={th + ' text-right text-blue-600'}>Total Cut</th>
+              <th className={th + ' text-right text-green-600'}>Passed QC</th>
               <th className={th + ' text-right text-red-600'}>Reject %</th>
               <th className={th + ' text-right text-sky-600'}>Dispatched</th>
               <th className={th + ' text-right'}>Stock</th>
-              <th className={th}>Last Update</th>
+              <th className={th}>Last Updated</th>
               <th className={th}></th>
             </tr>
           </thead>
@@ -117,7 +117,7 @@ export default function PipelineBoard() {
               : filtered.map((r, i) => {
                 const stale = isStale(r)
                 return (
-                  <tr key={r.id} className={`border-b ${stale ? 'bg-red-50/40' : i%2===0 ? 'bg-white' : 'bg-slate-50'} hover:bg-blue-50/30 transition-colors`}>
+                  <tr key={r.id} className={`border-b cursor-pointer ${stale ? 'bg-red-50/40' : i%2===0 ? 'bg-white' : 'bg-slate-50'} hover:bg-blue-50/50 transition-colors`}>
                     <td className={td + ' font-mono font-medium text-[#1A3557]'}>{r.product_code}</td>
                     <td className={td}>{r.product_name}</td>
                     <td className={td}>

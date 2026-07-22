@@ -95,7 +95,7 @@ export default function SewingTab({
     <div className="p-4 max-w-xl space-y-0">
       {hasLinkedEntries && (
         <div className="mb-3 rounded-md bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">
-          Quantities marked <strong>auto-synced</strong> are computed from the Daily Entry Sheet and cannot be edited here.
+          Numbers marked <strong>auto-filled</strong> are calculated automatically from your Daily Entry Sheet records. You don&apos;t need to type them here.
         </div>
       )}
 

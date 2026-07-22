@@ -71,31 +71,31 @@ function VendorInput({ value, rowId, field, onChange }: {
 
 // Column group headers
 const GROUP_HEADERS = [
-  { label: '#',                cols: 1, cls: 'bg-slate-800 text-white' },
-  { label: 'Branch',           cols: 1, cls: 'bg-slate-800 text-white' },
-  { label: 'Design Code',      cols: 1, cls: 'bg-slate-700 text-white' },
-  { label: 'Cut Total',        cols: 1, cls: 'bg-blue-700 text-white' },
-  { label: 'Cutting (×5 colors)', cols: 5, cls: 'bg-blue-600 text-white' },
-  { label: 'Print / Embroidery',  cols: 3, cls: 'bg-teal-600 text-white' },
-  { label: 'Sewing / Swing',      cols: 3, cls: 'bg-orange-500 text-white' },
-  { label: 'QC',                  cols: 2, cls: 'bg-green-600 text-white' },
-  { label: 'Rej / Alt / Spot',    cols: 3, cls: 'bg-red-600 text-white' },
-  { label: 'Finished',            cols: 1, cls: 'bg-purple-600 text-white' },
-  { label: 'Dispatch',            cols: 2, cls: 'bg-sky-600 text-white' },
-  { label: 'Stock',               cols: 4, cls: 'bg-slate-600 text-white' },
-  { label: '',                    cols: 1, cls: 'bg-slate-100' },
+  { label: '#',                      cols: 1, cls: 'bg-slate-800 text-white' },
+  { label: 'Branch',                 cols: 1, cls: 'bg-slate-800 text-white' },
+  { label: 'Design Code',            cols: 1, cls: 'bg-slate-700 text-white' },
+  { label: 'Cut Total',              cols: 1, cls: 'bg-blue-700 text-white' },
+  { label: 'Cutting — Color 1 to 5', cols: 5, cls: 'bg-blue-600 text-white' },
+  { label: 'Printing / Embroidery',  cols: 3, cls: 'bg-teal-600 text-white' },
+  { label: 'Sewing',                 cols: 3, cls: 'bg-orange-500 text-white' },
+  { label: 'QC — Good',              cols: 2, cls: 'bg-green-600 text-white' },
+  { label: 'Reject / Alter / Spot',  cols: 3, cls: 'bg-red-600 text-white' },
+  { label: 'Finished Goods',         cols: 1, cls: 'bg-purple-600 text-white' },
+  { label: 'Dispatch',               cols: 2, cls: 'bg-sky-600 text-white' },
+  { label: 'Stock',                  cols: 4, cls: 'bg-slate-600 text-white' },
+  { label: '',                       cols: 1, cls: 'bg-slate-100' },
 ]
 
 const SUB_HEADERS = [
   '#', 'Branch', 'Code', 'Total',
-  'C1','C2','C3','C4','C5',
-  'Vendor','Send','Recv',
-  'Vendor','OUT','IN',
-  'Recv','Out',
-  'Rej','Alt','Spot',
-  'QTY',
-  'Retail','Whlsl',
-  'WH','Cut','Swing','Short',
+  'Color 1','Color 2','Color 3','Color 4','Color 5',
+  'Vendor','Sent Out','Received',
+  'Vendor','Sent Out','Received',
+  'Received','Passed',
+  'Rejected','Altered','Spotted',
+  'Qty',
+  'Retail','Wholesale',
+  'Warehouse','Cutting','Sewing','Short',
   '',
 ]
 
@@ -228,8 +228,9 @@ export default function DailyEntrySheet() {
           ? <span className="inline-flex items-center gap-1 text-xs font-medium text-sky-700 bg-sky-50 border border-sky-200 rounded px-2 py-0.5">
               <Store className="h-3 w-3" />{selectedBranch}
             </span>
-          : <span className="inline-flex items-center gap-1 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">
-              <Store className="h-3 w-3" /> Select a branch in the top bar
+          : <span className="inline-flex items-center gap-2 text-sm font-semibold text-amber-700 bg-amber-50 border-2 border-amber-400 rounded-lg px-3 py-1.5">
+              <Store className="h-4 w-4" />
+              ← Select a branch from the dropdown in the top-right corner to start entering data
             </span>
         }
         <span className="ml-auto text-xs text-slate-400 flex items-center gap-2">
@@ -237,6 +238,19 @@ export default function DailyEntrySheet() {
           {saving.size > 0 && <span className="text-blue-500">Saving…</span>}
         </span>
       </div>
+
+      {/* How-to tip */}
+      {!selectedBranch && (
+        <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-800 space-y-1">
+          <p className="font-semibold">How to use the Daily Entry Sheet</p>
+          <ol className="list-decimal list-inside space-y-0.5 text-blue-700 text-xs">
+            <li>Select your branch from the dropdown in the top-right corner</li>
+            <li>Pick the date using the arrow buttons or the date field above</li>
+            <li>Click <strong>Add design code</strong> to add a row for each product worked on today</li>
+            <li>Fill in quantities for each stage — numbers save automatically when you move to the next cell</li>
+          </ol>
+        </div>
+      )}
 
       {/* Grid */}
       <BentoCard noPadding className="overflow-x-auto">

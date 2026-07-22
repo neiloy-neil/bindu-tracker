@@ -202,52 +202,98 @@ export default function ProductDetail({
         </BentoCard>
       </BentoGrid>
 
-      {/* Daily production activity */}
-      <BentoCard noPadding>
-        <div className="p-6 pb-0">
-          <h3 className="text-sm font-semibold text-slate-700 mb-4">Daily Activity Log</h3>
-        </div>
-        <ProductActivityPanel rows={dailyActivity} />
-      </BentoCard>
-
-      {/* Stage tabs */}
+      {/* Stage tabs — numbered steps */}
       <BentoCard noPadding className="bg-slate-50/50">
         <div className="p-6">
-          <Tabs defaultValue="cutting">
-            <TabsList className="w-full justify-start overflow-x-auto bg-white border shadow-sm">
-              <TabsTrigger value="cutting">Cutting</TabsTrigger>
-              <TabsTrigger value="printing">Printing</TabsTrigger>
-              <TabsTrigger value="sewing">Sewing</TabsTrigger>
-              <TabsTrigger value="qc">QC</TabsTrigger>
-              <TabsTrigger value="finishing">Finishing</TabsTrigger>
-              <TabsTrigger value="dispatch">Dispatch</TabsTrigger>
-              <TabsTrigger value="stock">Stock</TabsTrigger>
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Production Steps</p>
+            <p className="text-xs text-slate-500">Follow the steps in order. The current stage is highlighted. Fill in the details for the active step, then move on.</p>
+          </div>
+          <Tabs defaultValue={currentStage.toLowerCase() === 'dispatched' ? 'dispatch' : currentStage.toLowerCase()}>
+            <TabsList className="w-full justify-start overflow-x-auto bg-white border shadow-sm gap-0 p-0 h-auto rounded-lg">
+              {([
+                { value: 'cutting',  label: 'Cutting',  step: 1, stage: 'Cutting' },
+                { value: 'printing', label: 'Printing', step: 2, stage: 'Printing' },
+                { value: 'sewing',   label: 'Sewing',   step: 3, stage: 'Sewing' },
+                { value: 'qc',       label: 'QC Check', step: 4, stage: 'QC' },
+                { value: 'finishing',label: 'Finishing', step: 5, stage: 'Finishing' },
+                { value: 'dispatch', label: 'Dispatch', step: 6, stage: 'Dispatched' },
+                { value: 'stock',    label: 'Stock',    step: 7, stage: null },
+              ] as const).map(({ value, label, step, stage }) => {
+                const isCurrent = stage ? currentStage === stage : false
+                const isDone = stage ? PRODUCT_STAGES.indexOf(currentStage) > PRODUCT_STAGES.indexOf(stage as ProductStage) : false
+                return (
+                  <TabsTrigger
+                    key={value}
+                    value={value}
+                    className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-none first:rounded-l-lg last:rounded-r-lg border-r last:border-r-0 border-slate-100 min-w-[70px] text-center data-[state=active]:shadow-none data-[state=active]:bg-blue-50 ${isCurrent ? 'data-[state=active]:bg-blue-50' : ''}`}
+                  >
+                    <span className={`text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center ${
+                      isDone ? 'bg-green-500 text-white' :
+                      isCurrent ? 'bg-blue-600 text-white animate-pulse' :
+                      'bg-slate-200 text-slate-500'
+                    }`}>{isDone ? '✓' : step}</span>
+                    <span className={`text-[11px] font-medium ${isCurrent ? 'text-blue-700' : isDone ? 'text-green-700' : 'text-slate-500'}`}>{label}</span>
+                  </TabsTrigger>
+                )
+              })}
             </TabsList>
+
             <div className="bg-white rounded-xl border shadow-sm mt-4">
               <TabsContent value="cutting" className="m-0">
+                <div className="px-5 pt-4 pb-1 border-b border-slate-100">
+                  <p className="text-xs text-slate-500">Enter the fabric cutting details — color names, quantities per color, start date, and total weight. This is the <strong>first step</strong> in production.</p>
+                </div>
                 <CuttingTab productId={product.id} onStageChange={setCurrentStage} />
               </TabsContent>
               <TabsContent value="printing" className="m-0">
+                <div className="px-5 pt-4 pb-1 border-b border-slate-100">
+                  <p className="text-xs text-slate-500">Record the printing or embroidery vendor, how many pieces were sent out, and how many came back. <strong>Quantities marked auto-synced are filled automatically</strong> from your daily entries.</p>
+                </div>
                 <PrintingTab productId={product.id} onStageChange={setCurrentStage} hasLinkedEntries={dailyActivity.length > 0} />
               </TabsContent>
               <TabsContent value="sewing" className="m-0">
+                <div className="px-5 pt-4 pb-1 border-b border-slate-100">
+                  <p className="text-xs text-slate-500">Track the sewing vendor, sending date, and how many pieces went out vs came back. Short quantity means pieces that didn&apos;t return.</p>
+                </div>
                 <SewingTab productId={product.id} onStageChange={setCurrentStage} hasLinkedEntries={dailyActivity.length > 0} />
               </TabsContent>
               <TabsContent value="qc" className="m-0">
+                <div className="px-5 pt-4 pb-1 border-b border-slate-100">
+                  <p className="text-xs text-slate-500">Record quality check results — how many pieces passed, were rejected, or need alteration. Only <strong>passed</strong> pieces move to Finishing.</p>
+                </div>
                 <QCTab productId={product.id} onStageChange={setCurrentStage} hasLinkedEntries={dailyActivity.length > 0} />
               </TabsContent>
               <TabsContent value="finishing" className="m-0">
+                <div className="px-5 pt-4 pb-1 border-b border-slate-100">
+                  <p className="text-xs text-slate-500">Track pieces through ironing, folding, and final packing. Once all pieces are <strong>Dispatch Ready</strong>, the product is ready to be sent to branches.</p>
+                </div>
                 <FinishingTab productId={product.id} onStageChange={setCurrentStage} hasLinkedEntries={dailyActivity.length > 0} />
               </TabsContent>
               <TabsContent value="dispatch" className="m-0">
+                <div className="px-5 pt-4 pb-1 border-b border-slate-100">
+                  <p className="text-xs text-slate-500">Enter how many pieces were sent to each branch and on which date. You can record up to 3 separate dispatch batches per branch.</p>
+                </div>
                 <DispatchTab productId={product.id} onTotalChange={setTotalDispatched} />
               </TabsContent>
               <TabsContent value="stock" className="m-0">
+                <div className="px-5 pt-4 pb-1 border-b border-slate-100">
+                  <p className="text-xs text-slate-500">Record any remaining unsold pieces by color. Stock is what stays in the warehouse after dispatch.</p>
+                </div>
                 <StockTab productId={product.id} />
               </TabsContent>
             </div>
           </Tabs>
         </div>
+      </BentoCard>
+
+      {/* Daily production activity — below stage tabs */}
+      <BentoCard noPadding>
+        <div className="p-6 pb-0">
+          <h3 className="text-sm font-semibold text-slate-700 mb-1">Daily Activity Log</h3>
+          <p className="text-xs text-slate-400 mb-4">All daily entry sheet records linked to this product — automatically collected from the Daily Entry Sheet.</p>
+        </div>
+        <ProductActivityPanel rows={dailyActivity} />
       </BentoCard>
     </div>
   )
