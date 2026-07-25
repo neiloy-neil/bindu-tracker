@@ -12,7 +12,8 @@ import { differenceInDays, parseISO } from 'date-fns'
 import { BentoGrid } from '@/components/shared/BentoGrid'
 import { BentoCard } from '@/components/shared/BentoCard'
 import ProductActivityPanel from './ProductActivityPanel'
-import type { DailyRow } from './ProductActivityPanel'
+
+type DailyRow = { entry_date: string; design_code: string; notes: string | null }
 import CuttingTab from './stages/CuttingTab'
 import PrintingTab from './stages/PrintingTab'
 import SewingTab from './stages/SewingTab'
