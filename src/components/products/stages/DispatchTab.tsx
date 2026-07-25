@@ -16,9 +16,11 @@ const emptyMap = (): DispatchMap =>
 export default function DispatchTab({
   productId,
   onTotalChange,
+  onStageChange,
 }: {
   productId: string
   onTotalChange?: (total: number) => void
+  onStageChange?: (stage: string) => void
 }) {
   const supabase = createClient()
   const [map, setMap] = useState<DispatchMap>(emptyMap)
@@ -46,7 +48,7 @@ export default function DispatchTab({
       })
   }, [productId, supabase]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const saveSlot = useCallback(async (branch: string, slotIdx: number, slot: Slot) => {
+  const saveSlot = useCallback(async (branch: string, slotIdx: number, slot: Slot, newTotal: number) => {
     const { error } = await supabase.from('branch_dispatch').upsert(
       {
         product_id: productId,
@@ -57,8 +59,14 @@ export default function DispatchTab({
       },
       { onConflict: 'product_id,branch_name,dispatch_no' }
     )
-    if (error) toast.error('Save failed')
-  }, [productId, supabase])
+    if (error) { toast.error('Save failed'); return }
+
+    // Auto-advance to Completed when all pieces are dispatched
+    if (dispatchReady !== null && newTotal >= dispatchReady && dispatchReady > 0) {
+      const { error: stgErr } = await supabase.from('products').update({ current_stage: 'Completed' }).eq('id', productId)
+      if (!stgErr) onStageChange?.('Completed')
+    }
+  }, [productId, supabase, dispatchReady, onStageChange])
 
   const updateSlot = (branch: string, slotIdx: number, field: keyof Slot, value: unknown) => {
     setMap(prev => {
@@ -70,13 +78,13 @@ export default function DispatchTab({
     })
     // side effects outside the updater
     const updatedSlot = { ...map[branch][slotIdx], [field]: value } as Slot
-    saveSlot(branch, slotIdx, updatedSlot)
     const total = BRANCHES.reduce((s, b) => {
       const slots = b === branch
         ? map[branch].map((sl, i) => i === slotIdx ? { ...sl, [field]: value } : sl) as [Slot, Slot, Slot]
         : map[b]
       return s + slots.reduce((ss, sl) => ss + (sl.qty ?? 0), 0)
     }, 0)
+    saveSlot(branch, slotIdx, updatedSlot, total)
     onTotalChange?.(total)
   }
 

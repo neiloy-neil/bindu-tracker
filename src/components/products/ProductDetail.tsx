@@ -274,7 +274,7 @@ export default function ProductDetail({
                 <div className="px-5 pt-4 pb-1 border-b border-slate-100">
                   <p className="text-xs text-slate-500">Enter how many pieces were sent to each branch and on which date. You can record up to 3 separate dispatch batches per branch.</p>
                 </div>
-                <DispatchTab productId={product.id} onTotalChange={setTotalDispatched} />
+                <DispatchTab productId={product.id} onTotalChange={setTotalDispatched} onStageChange={s => setCurrentStage(s as ProductStage)} />
               </TabsContent>
               <TabsContent value="stock" className="m-0">
                 <div className="px-5 pt-4 pb-1 border-b border-slate-100">
