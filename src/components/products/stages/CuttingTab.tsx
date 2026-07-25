@@ -1,11 +1,12 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { COLOR_OPTIONS } from '@/constants'
 import { refreshProductStage } from '@/lib/utils/stageAdvance'
+import { logActivity } from '@/lib/utils/logActivity'
 import type { ProductStage } from '@/types/app'
 
 type CuttingRow = {
@@ -54,14 +55,15 @@ function NumInput({ value, onChange }: { value: number; onChange: (v: number) =>
 }
 
 export default function CuttingTab({
-  productId, onStageChange,
-}: { productId: string; onStageChange: (s: ProductStage) => void }) {
+  productId, productCode, productName, onStageChange,
+}: { productId: string; productCode: string; productName: string; onStageChange: (s: ProductStage) => void }) {
   const supabase = createClient()
   const [data, setData] = useState<CuttingRow>(EMPTY(productId))
   const [loading, setLoading] = useState(true)
+  const logTimer = useRef<ReturnType<typeof setTimeout>>()
 
   useEffect(() => {
-    supabase.from('cutting').select('*').eq('product_id', productId).maybeSingle()
+    supabase.from('cutting').select('id,product_id,start_date,color_1_name,color_1_qty,color_2_name,color_2_qty,color_3_name,color_3_qty,color_4_name,color_4_qty,color_5_name,color_5_qty,color_6_name,color_6_qty,total_kg').eq('product_id', productId).maybeSingle()
       .then(({ data: row }) => {
         if (row) setData(row as CuttingRow)
         setLoading(false)
@@ -72,11 +74,30 @@ export default function CuttingTab({
 
   const save = async (updated: CuttingRow) => {
     const { error } = await supabase.from('cutting').upsert(
-      { ...updated, product_id: productId },
+      {
+        product_id:   productId,
+        start_date:   updated.start_date,
+        color_1_name: updated.color_1_name, color_1_qty: updated.color_1_qty,
+        color_2_name: updated.color_2_name, color_2_qty: updated.color_2_qty,
+        color_3_name: updated.color_3_name, color_3_qty: updated.color_3_qty,
+        color_4_name: updated.color_4_name, color_4_qty: updated.color_4_qty,
+        color_5_name: updated.color_5_name, color_5_qty: updated.color_5_qty,
+        color_6_name: updated.color_6_name, color_6_qty: updated.color_6_qty,
+        total_kg:     updated.total_kg,
+      },
       { onConflict: 'product_id' }
     )
     if (error) { toast.error('Save failed'); return }
     await refreshProductStage(supabase, productId, onStageChange)
+    clearTimeout(logTimer.current)
+    logTimer.current = setTimeout(() => {
+      const total = COLORS.reduce((s, n) => s + (updated[`color_${n}_qty`] ?? 0), 0)
+      const colorParts = COLORS
+        .map(n => updated[`color_${n}_name`] ? `${updated[`color_${n}_name`]}: ${updated[`color_${n}_qty`]}` : null)
+        .filter(Boolean).join(' · ')
+      logActivity(supabase, productId, productCode, productName, 'Cutting',
+        `Total: ${total} pcs${colorParts ? ` · ${colorParts}` : ''}`)
+    }, 1500)
   }
 
   const update = (field: keyof CuttingRow, value: unknown) => {

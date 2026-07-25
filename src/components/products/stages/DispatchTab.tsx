@@ -1,10 +1,11 @@
 'use client'
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { BRANCHES } from '@/constants'
 import { ChevronDown, ChevronRight } from 'lucide-react'
+import { logActivity } from '@/lib/utils/logActivity'
 
 type Slot = { dispatch_date: string | null; qty: number }
 type DispatchMap = Record<string, [Slot, Slot, Slot]>
@@ -15,10 +16,14 @@ const emptyMap = (): DispatchMap =>
 
 export default function DispatchTab({
   productId,
+  productCode,
+  productName,
   onTotalChange,
   onStageChange,
 }: {
   productId: string
+  productCode: string
+  productName: string
   onTotalChange?: (total: number) => void
   onStageChange?: (stage: string) => void
 }) {
@@ -26,6 +31,7 @@ export default function DispatchTab({
   const [map, setMap] = useState<DispatchMap>(emptyMap)
   const [loading, setLoading] = useState(true)
   const [dispatchReady, setDispatchReady] = useState<number | null>(null)
+  const logTimer = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
 
   useEffect(() => {
     supabase.from('finishing').select('dispatch_ready_qty').eq('product_id', productId).maybeSingle()
@@ -64,9 +70,22 @@ export default function DispatchTab({
     // Auto-advance to Completed when all pieces are dispatched
     if (dispatchReady !== null && newTotal >= dispatchReady && dispatchReady > 0) {
       const { error: stgErr } = await supabase.from('products').update({ current_stage: 'Completed' }).eq('id', productId)
-      if (!stgErr) onStageChange?.('Completed')
+      if (!stgErr) {
+        onStageChange?.('Completed')
+        logActivity(supabase, productId, productCode, productName, 'Stage', 'Moved to Completed — all dispatched')
+      }
     }
-  }, [productId, supabase, dispatchReady, onStageChange])
+
+    // Debounce dispatch log per branch
+    clearTimeout(logTimer.current[branch])
+    logTimer.current[branch] = setTimeout(() => {
+      if (slot.qty > 0) {
+        const dateStr = slot.dispatch_date ?? 'no date'
+        logActivity(supabase, productId, productCode, productName, 'Dispatch',
+          `${slot.qty} pcs → ${branch} (${dateStr})`)
+      }
+    }, 1500)
+  }, [productId, productCode, productName, supabase, dispatchReady, onStageChange])
 
   const updateSlot = (branch: string, slotIdx: number, field: keyof Slot, value: unknown) => {
     setMap(prev => {

@@ -38,7 +38,7 @@ export default function StockTab({ productId }: { productId: string }) {
   useEffect(() => {
     const load = async () => {
       const [{ data: row }, { data: fin }, { data: dispatches }] = await Promise.all([
-        supabase.from('warehouse_stock').select('*').eq('product_id', productId).maybeSingle(),
+        supabase.from('warehouse_stock').select('product_id,color_1_name,color_1_qty,color_2_name,color_2_qty,color_3_name,color_3_qty,color_4_name,color_4_qty,color_5_name,color_5_qty,color_6_name,color_6_qty').eq('product_id', productId).maybeSingle(),
         supabase.from('finishing').select('dispatch_ready_qty').eq('product_id', productId).maybeSingle(),
         supabase.from('branch_dispatch').select('qty').eq('product_id', productId),
       ])

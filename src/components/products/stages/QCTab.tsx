@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { QC_STATUS } from '@/constants'
 import { refreshProductStage } from '@/lib/utils/stageAdvance'
+import { logActivity } from '@/lib/utils/logActivity'
 import type { ProductStage, QcStatus } from '@/types/app'
 
 type QCRow = {
@@ -44,11 +45,12 @@ function SyncedQty({ value }: { value: number }) {
 }
 
 export default function QCTab({
-  productId, onStageChange, hasLinkedEntries = false,
-}: { productId: string; onStageChange: (s: ProductStage) => void; hasLinkedEntries?: boolean }) {
+  productId, productCode, productName, onStageChange, hasLinkedEntries = false,
+}: { productId: string; productCode: string; productName: string; onStageChange: (s: ProductStage) => void; hasLinkedEntries?: boolean }) {
   const supabase = createClient()
   const [data, setData] = useState<QCRow>(EMPTY(productId))
   const [loading, setLoading] = useState(true)
+  const logTimer = useRef<ReturnType<typeof setTimeout>>()
 
   useEffect(() => {
     supabase.from('qc').select('*').eq('product_id', productId).maybeSingle()
@@ -69,6 +71,16 @@ export default function QCTab({
     )
     if (error) { toast.error('Save failed'); return }
     await refreshProductStage(supabase, productId, onStageChange)
+    clearTimeout(logTimer.current)
+    logTimer.current = setTimeout(() => {
+      const parts = [
+        updated.out_qty ? `Passed: ${updated.out_qty}` : null,
+        updated.reject_qty ? `Rejected: ${updated.reject_qty}` : null,
+        updated.alter_qty ? `Alter: ${updated.alter_qty}` : null,
+        updated.spot_qty ? `Spot: ${updated.spot_qty}` : null,
+      ].filter(Boolean).join(' · ')
+      logActivity(supabase, productId, productCode, productName, 'QC', parts || undefined)
+    }, 1500)
   }
 
   const set = (field: keyof QCRow, value: unknown) => {

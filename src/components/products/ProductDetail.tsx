@@ -4,6 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils/formatters'
+import { logActivity } from '@/lib/utils/logActivity'
+import { createClient } from '@/lib/supabase/client'
 import type { ProductStage } from '@/types/app'
 import { PRODUCT_STAGES } from '@/constants'
 import { CheckCircle2, Circle, AlertTriangle, Target, CalendarClock } from 'lucide-react'
@@ -56,8 +58,14 @@ export default function ProductDetail({
   totalDispatched?: number
   dailyActivity?: DailyRow[]
 }) {
+  const supabase = createClient()
   const [currentStage, setCurrentStage] = useState<ProductStage>(product.current_stage)
   const [totalDispatched, setTotalDispatched] = useState(initialDispatched)
+
+  const handleStageChange = (stage: ProductStage) => {
+    setCurrentStage(stage)
+    logActivity(supabase, product.id, product.product_code, product.product_name, 'Stage', `Moved to ${stage}`)
+  }
   const stageIdx = PRODUCT_STAGES.indexOf(currentStage)
 
   // Dispatch progress
@@ -245,37 +253,37 @@ export default function ProductDetail({
                 <div className="px-5 pt-4 pb-1 border-b border-slate-100">
                   <p className="text-xs text-slate-500">Enter the fabric cutting details — color names, quantities per color, start date, and total weight. This is the <strong>first step</strong> in production.</p>
                 </div>
-                <CuttingTab productId={product.id} onStageChange={setCurrentStage} />
+                <CuttingTab productId={product.id} productCode={product.product_code} productName={product.product_name} onStageChange={handleStageChange} />
               </TabsContent>
               <TabsContent value="printing" className="m-0">
                 <div className="px-5 pt-4 pb-1 border-b border-slate-100">
                   <p className="text-xs text-slate-500">Record the printing or embroidery vendor, how many pieces were sent out, and how many came back. <strong>Quantities marked auto-synced are filled automatically</strong> from your daily entries.</p>
                 </div>
-                <PrintingTab productId={product.id} onStageChange={setCurrentStage} hasLinkedEntries={dailyActivity.length > 0} />
+                <PrintingTab productId={product.id} productCode={product.product_code} productName={product.product_name} onStageChange={handleStageChange} hasLinkedEntries={dailyActivity.length > 0} />
               </TabsContent>
               <TabsContent value="sewing" className="m-0">
                 <div className="px-5 pt-4 pb-1 border-b border-slate-100">
                   <p className="text-xs text-slate-500">Track the sewing vendor, sending date, and how many pieces went out vs came back. Short quantity means pieces that didn&apos;t return.</p>
                 </div>
-                <SewingTab productId={product.id} onStageChange={setCurrentStage} hasLinkedEntries={dailyActivity.length > 0} />
+                <SewingTab productId={product.id} productCode={product.product_code} productName={product.product_name} onStageChange={handleStageChange} hasLinkedEntries={dailyActivity.length > 0} />
               </TabsContent>
               <TabsContent value="qc" className="m-0">
                 <div className="px-5 pt-4 pb-1 border-b border-slate-100">
                   <p className="text-xs text-slate-500">Record quality check results — how many pieces passed, were rejected, or need alteration. Only <strong>passed</strong> pieces move to Finishing.</p>
                 </div>
-                <QCTab productId={product.id} onStageChange={setCurrentStage} hasLinkedEntries={dailyActivity.length > 0} />
+                <QCTab productId={product.id} productCode={product.product_code} productName={product.product_name} onStageChange={handleStageChange} hasLinkedEntries={dailyActivity.length > 0} />
               </TabsContent>
               <TabsContent value="finishing" className="m-0">
                 <div className="px-5 pt-4 pb-1 border-b border-slate-100">
                   <p className="text-xs text-slate-500">Track pieces through ironing, folding, and final packing. Once all pieces are <strong>Dispatch Ready</strong>, the product is ready to be sent to branches.</p>
                 </div>
-                <FinishingTab productId={product.id} onStageChange={setCurrentStage} hasLinkedEntries={dailyActivity.length > 0} />
+                <FinishingTab productId={product.id} productCode={product.product_code} productName={product.product_name} onStageChange={handleStageChange} hasLinkedEntries={dailyActivity.length > 0} />
               </TabsContent>
               <TabsContent value="dispatch" className="m-0">
                 <div className="px-5 pt-4 pb-1 border-b border-slate-100">
                   <p className="text-xs text-slate-500">Enter how many pieces were sent to each branch and on which date. You can record up to 3 separate dispatch batches per branch.</p>
                 </div>
-                <DispatchTab productId={product.id} onTotalChange={setTotalDispatched} onStageChange={s => setCurrentStage(s as ProductStage)} />
+                <DispatchTab productId={product.id} productCode={product.product_code} productName={product.product_name} onTotalChange={setTotalDispatched} onStageChange={s => setCurrentStage(s as ProductStage)} />
               </TabsContent>
               <TabsContent value="stock" className="m-0">
                 <div className="px-5 pt-4 pb-1 border-b border-slate-100">

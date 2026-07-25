@@ -1,10 +1,11 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { refreshProductStage } from '@/lib/utils/stageAdvance'
+import { logActivity } from '@/lib/utils/logActivity'
 import type { ProductStage } from '@/types/app'
 import ColorQtyGrid from './ColorQtyGrid'
 
@@ -70,12 +71,13 @@ function NumField({ label, value, onChange, onBlur, readOnly, syncedBadge }: {
 }
 
 export default function FinishingTab({
-  productId, onStageChange, hasLinkedEntries = false,
-}: { productId: string; onStageChange: (s: ProductStage) => void; hasLinkedEntries?: boolean }) {
+  productId, productCode, productName, onStageChange, hasLinkedEntries = false,
+}: { productId: string; productCode: string; productName: string; onStageChange: (s: ProductStage) => void; hasLinkedEntries?: boolean }) {
   const supabase = createClient()
   const [data, setData] = useState<FinishingData>(EMPTY(productId))
   const [cuttingColors, setCuttingColors] = useState<CuttingColors>(Array.from({ length: 6 }, () => ({ name: null })))
   const [loading, setLoading] = useState(true)
+  const logTimer = useRef<ReturnType<typeof setTimeout>>()
 
   useEffect(() => {
     Promise.all([
@@ -95,6 +97,14 @@ export default function FinishingTab({
     )
     if (error) { toast.error('Save failed'); return }
     await refreshProductStage(supabase, productId, onStageChange)
+    clearTimeout(logTimer.current)
+    logTimer.current = setTimeout(() => {
+      const parts = [
+        updated.received_qty ? `Received: ${updated.received_qty}` : null,
+        updated.dispatch_ready_qty ? `Ready to dispatch: ${updated.dispatch_ready_qty}` : null,
+      ].filter(Boolean).join(' · ')
+      logActivity(supabase, productId, productCode, productName, 'Finishing', parts || undefined)
+    }, 1500)
   }
 
   if (loading) return <div className="p-4 space-y-3">{Array.from({length:4}).map((_,i)=><Skeleton key={i} className="h-10 w-64"/>)}</div>

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { PRINT_STATUS } from '@/constants'
 import { refreshProductStage } from '@/lib/utils/stageAdvance'
+import { logActivity } from '@/lib/utils/logActivity'
 import type { ProductStage, PrintStatus } from '@/types/app'
 import VendorSelect from '@/components/vendors/VendorSelect'
 import ColorQtyGrid from './ColorQtyGrid'
@@ -55,12 +56,13 @@ function SyncedQty({ value }: { value: number }) {
 }
 
 export default function PrintingTab({
-  productId, onStageChange, hasLinkedEntries = false,
-}: { productId: string; onStageChange: (s: ProductStage) => void; hasLinkedEntries?: boolean }) {
+  productId, productCode, productName, onStageChange, hasLinkedEntries = false,
+}: { productId: string; productCode: string; productName: string; onStageChange: (s: ProductStage) => void; hasLinkedEntries?: boolean }) {
   const supabase = createClient()
   const [data, setData] = useState<PrintRow>(EMPTY(productId))
   const [cuttingColors, setCuttingColors] = useState<CuttingColors>(Array.from({ length: 6 }, () => ({ name: null })))
   const [loading, setLoading] = useState(true)
+  const logTimer = useRef<ReturnType<typeof setTimeout>>()
 
   useEffect(() => {
     Promise.all([
@@ -82,6 +84,15 @@ export default function PrintingTab({
     )
     if (error) { toast.error('Save failed'); return }
     await refreshProductStage(supabase, productId, onStageChange)
+    clearTimeout(logTimer.current)
+    logTimer.current = setTimeout(() => {
+      const parts = [
+        updated.vendor_name ? `Vendor: ${updated.vendor_name}` : null,
+        updated.out_qty ? `Sent: ${updated.out_qty}` : null,
+        updated.in_qty ? `Received: ${updated.in_qty}` : null,
+      ].filter(Boolean).join(' · ')
+      logActivity(supabase, productId, productCode, productName, 'Printing', parts || undefined)
+    }, 1500)
   }
 
   const set = (field: keyof PrintRow, value: unknown) => {

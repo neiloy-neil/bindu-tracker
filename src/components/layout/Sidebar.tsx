@@ -11,7 +11,7 @@ import { useState, useEffect } from 'react'
 
 const nav = [
   { href: '/dashboard',          label: 'Dashboard',    icon: LayoutDashboard, req: ['Admin', 'Manager', 'Viewer'] },
-  { href: '/dashboard/daily',    label: 'Daily Entry',  icon: ClipboardList,   req: ['Admin', 'Manager'] },
+  { href: '/dashboard/daily',    label: 'Daily Logs',   icon: ClipboardList,   req: ['Admin', 'Manager'] },
   { href: '/dashboard/products', label: 'Products',     icon: Package,         req: ['Admin', 'Manager', 'Viewer'] },
   { href: '/dashboard/pipeline', label: 'Pipeline',     icon: GitBranch,       req: ['Admin', 'Manager', 'Viewer'] },
   { href: '/dashboard/reports',  label: 'Reports',      icon: BarChart3,       req: ['Admin', 'Manager'] },

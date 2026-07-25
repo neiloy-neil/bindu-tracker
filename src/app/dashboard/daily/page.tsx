@@ -1,5 +1,5 @@
-import DailyEntrySheet from '@/components/daily/DailyEntrySheet'
+import DailyLogs from '@/components/daily/DailyLogs'
 
 export default function DailyPage() {
-  return <DailyEntrySheet />
+  return <DailyLogs />
 }
