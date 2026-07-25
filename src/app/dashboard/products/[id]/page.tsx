@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ProductDetail from '@/components/products/ProductDetail'
-import type { DailyRow } from '@/components/products/ProductActivityPanel'
 
 export default async function ProductPage({ params }: { params: { id: string } }) {
   const supabase = await createClient()

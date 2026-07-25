@@ -9,7 +9,6 @@ type DailyRow = {
   notes: string | null
 }
 
-export type { DailyRow }
 
 export default function ProductActivityPanel({ rows }: { rows: DailyRow[] }) {
   if (!rows.length) {
