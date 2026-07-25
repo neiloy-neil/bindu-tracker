@@ -66,14 +66,18 @@ export default function DispatchTab({
       const slots = [...m[branch]] as [Slot, Slot, Slot]
       slots[slotIdx] = { ...slots[slotIdx], [field]: value }
       m[branch] = slots
-      saveSlot(branch, slotIdx, slots[slotIdx])
-      const total = BRANCHES.reduce((s, b) => {
-        const branchSlots = b === branch ? slots : m[b]
-        return s + branchSlots.reduce((ss, sl) => ss + (sl.qty ?? 0), 0)
-      }, 0)
-      onTotalChange?.(total)
       return m
     })
+    // side effects outside the updater
+    const updatedSlot = { ...map[branch][slotIdx], [field]: value } as Slot
+    saveSlot(branch, slotIdx, updatedSlot)
+    const total = BRANCHES.reduce((s, b) => {
+      const slots = b === branch
+        ? map[branch].map((sl, i) => i === slotIdx ? { ...sl, [field]: value } : sl) as [Slot, Slot, Slot]
+        : map[b]
+      return s + slots.reduce((ss, sl) => ss + (sl.qty ?? 0), 0)
+    }, 0)
+    onTotalChange?.(total)
   }
 
   const branchTotal = (branch: string) =>
@@ -121,7 +125,7 @@ export default function DispatchTab({
         </div>
       )}
 
-      <div className="rounded-lg border border-slate-200 overflow-hidden">
+      <div className="rounded-lg border border-slate-200 overflow-x-auto">
         <table className="text-xs border-collapse w-full min-w-max">
           <thead>
             <tr className="bg-slate-100">
