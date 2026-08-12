@@ -191,57 +191,62 @@ export default function SewingTab({
   const hasColorNames = cuttingColors.some(c => c.name)
 
   return (
-    <div className="p-4 max-w-xl space-y-0">
-      {hasLinkedEntries && (
-        <div className="mb-3 rounded-md bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">
-          Numbers marked <strong>auto-synced</strong> are calculated automatically from your Daily Entry Sheet records. You don&apos;t need to type them here.
-        </div>
-      )}
-
-      <Field label="Sewing Vendor">
-        <VendorSelect type="sewing" value={data.vendor_name} onChange={v => set('vendor_name', v)} />
-      </Field>
-
-      <Field label="Sending Date">
-        <input type="date" className={inputCls + ' w-44'} value={data.sending_date ?? ''}
-          onChange={e => setData(d => ({ ...d, sending_date: e.target.value || null }))}
-          onBlur={e => { const v = e.target.value || null; const u = { ...data, sending_date: v }; setData(u); saveParent(u) }} />
-      </Field>
-
-      <Field label="Status">
-        <Select value={data.status ?? ''} onValueChange={v => set('status', v as SewStatus || null)}>
-          <SelectTrigger className="w-40 h-8 text-sm"><SelectValue placeholder="Select status" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">— None —</SelectItem>
-            {SEW_STATUS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </Field>
-
-      <Field label="Sent Out (QTY)">
-        {hasLinkedEntries ? <SyncedQty value={data.out_qty} /> : (
-          <input type="number" min={0} className={inputCls + ' w-28 text-right'} value={data.out_qty || ''}
-            placeholder="0"
-            onChange={e => setData(d => ({ ...d, out_qty: parseInt(e.target.value) || 0 }))}
-            onBlur={e => { const v = parseInt(e.target.value) || 0; const u = { ...data, out_qty: v }; setData(u); saveParent(u) }} />
+    <div className="p-4 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      {/* Left — vendor, status, dates, quantities */}
+      <div className="space-y-0">
+        {hasLinkedEntries && (
+          <div className="mb-3 rounded-md bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">
+            Numbers marked <strong>auto-synced</strong> are calculated automatically from your Daily Entry Sheet records. You don&apos;t need to type them here.
+          </div>
         )}
-      </Field>
 
-      <Field label="Short (QTY)">
-        <input type="number" min={0} className={inputCls + ' w-28 text-right'} value={data.short_qty || ''}
-          placeholder="0"
-          onChange={e => setData(d => ({ ...d, short_qty: parseInt(e.target.value) || 0 }))}
-          onBlur={e => { const v = parseInt(e.target.value) || 0; const u = { ...data, short_qty: v }; setData(u); saveParent(u) }} />
-      </Field>
+        <Field label="Sewing Vendor">
+          <VendorSelect type="sewing" value={data.vendor_name} onChange={v => set('vendor_name', v)} />
+        </Field>
 
-      <Field label="Still at Sewing">
-        <Badge variant="secondary" className={pending > 0 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}>
-          {pending} pcs
-        </Badge>
-      </Field>
+        <Field label="Sending Date">
+          <input type="date" className={inputCls + ' w-44'} value={data.sending_date ?? ''}
+            onChange={e => setData(d => ({ ...d, sending_date: e.target.value || null }))}
+            onBlur={e => { const v = e.target.value || null; const u = { ...data, sending_date: v }; setData(u); saveParent(u) }} />
+        </Field>
 
+        <Field label="Status">
+          <Select value={data.status ?? ''} onValueChange={v => set('status', v as SewStatus || null)}>
+            <SelectTrigger className="w-40 h-8 text-sm"><SelectValue placeholder="Select status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">— None —</SelectItem>
+              {SEW_STATUS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field label="Sent Out (QTY)">
+          {hasLinkedEntries ? <SyncedQty value={data.out_qty} /> : (
+            <input type="number" min={0} className={inputCls + ' w-28 text-right'} value={data.out_qty || ''}
+              placeholder="0"
+              onChange={e => setData(d => ({ ...d, out_qty: parseInt(e.target.value) || 0 }))}
+              onBlur={e => { const v = parseInt(e.target.value) || 0; const u = { ...data, out_qty: v }; setData(u); saveParent(u) }} />
+          )}
+        </Field>
+
+        <Field label="Short (QTY)">
+          <input type="number" min={0} className={inputCls + ' w-28 text-right'} value={data.short_qty || ''}
+            placeholder="0"
+            onChange={e => setData(d => ({ ...d, short_qty: parseInt(e.target.value) || 0 }))}
+            onBlur={e => { const v = parseInt(e.target.value) || 0; const u = { ...data, short_qty: v }; setData(u); saveParent(u) }} />
+        </Field>
+
+        <Field label="Still at Sewing">
+          <Badge variant="secondary" className={pending > 0 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}>
+            {pending} pcs
+          </Badge>
+        </Field>
+      </div>
+
+      {/* Right — received batches */}
+      <div className="pt-1">
       {/* ── Received Batches ─────────────────────────────────────── */}
-      <div className="pt-4 pb-2">
+      <div className="pb-2">
         <div className="flex items-center justify-between mb-3">
           <h4 className="text-sm font-semibold text-slate-700">Received Batches</h4>
           <span className="text-xs text-slate-400">
@@ -361,6 +366,7 @@ export default function SewingTab({
             Add Batch
           </button>
         )}
+      </div>
       </div>
     </div>
   )

@@ -109,72 +109,100 @@ export default function CuttingTab({
   if (loading) return <div className="space-y-3 p-4">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-8 w-full"/>)}</div>
 
   return (
-    <div className="p-4 space-y-4">
-      <div className="flex items-center gap-3">
-        <label className="text-sm text-slate-600 w-24">Start Date</label>
-        <input
-          type="date"
-          value={data.start_date ?? ''}
-          className="border rounded px-2 py-1 text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-400"
-          onChange={e => setData(d => ({ ...d, start_date: e.target.value || null }))}
-          onBlur={e => { const u = { ...data, start_date: e.target.value || null }; setData(u); save(u) }}
-        />
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-slate-500 text-xs">
-              <th className="text-left pb-2 pr-4">Color</th>
-              <th className="text-right pb-2 pr-4">Quantity</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {COLORS.map(n => (
-              <tr key={n} className="py-1">
-                <td className="pr-4 py-2">
-                  <Select
-                    value={data[`color_${n}_name`] ?? ''}
-                    onValueChange={v => update(`color_${n}_name`, v || null)}
-                  >
-                    <SelectTrigger className="w-44 h-8 text-sm">
-                      <SelectValue placeholder={`Color ${n}`} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">— None —</SelectItem>
-                      {COLOR_OPTIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </td>
-                <td className="py-2 text-right pr-4">
-                  <NumInput
-                    value={data[`color_${n}_qty`]}
-                    onChange={v => update(`color_${n}_qty`, v)}
-                  />
-                </td>
+    <div className="p-4 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      {/* Left — color table */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <label className="text-sm text-slate-600 w-24">Start Date</label>
+          <input
+            type="date"
+            value={data.start_date ?? ''}
+            className="border rounded px-2 py-1 text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-400"
+            onChange={e => setData(d => ({ ...d, start_date: e.target.value || null }))}
+            onBlur={e => { const u = { ...data, start_date: e.target.value || null }; setData(u); save(u) }}
+          />
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-slate-500 text-xs">
+                <th className="text-left pb-2 pr-4">Color</th>
+                <th className="text-right pb-2 pr-4">Quantity</th>
               </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr className="border-t-2 border-slate-300 font-semibold">
-              <td className="pt-3 text-slate-700">Total Pieces</td>
-              <td className="pt-3 text-right pr-4 text-blue-700 text-base">{total.toLocaleString()}</td>
-            </tr>
-          </tfoot>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {COLORS.map(n => (
+                <tr key={n} className="py-1">
+                  <td className="pr-4 py-2">
+                    <Select
+                      value={data[`color_${n}_name`] ?? ''}
+                      onValueChange={v => update(`color_${n}_name`, v || null)}
+                    >
+                      <SelectTrigger className="w-44 h-8 text-sm">
+                        <SelectValue placeholder={`Color ${n}`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">— None —</SelectItem>
+                        {COLOR_OPTIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                  <td className="py-2 text-right pr-4">
+                    <NumInput
+                      value={data[`color_${n}_qty`]}
+                      onChange={v => update(`color_${n}_qty`, v)}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-slate-300 font-semibold">
+                <td className="pt-3 text-slate-700">Total Pieces</td>
+                <td className="pt-3 text-right pr-4 text-blue-700 text-base">{total.toLocaleString()}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div className="flex items-center gap-3 pt-2 border-t">
+          <label className="text-sm text-slate-600 w-24">Total KG</label>
+          <input
+            type="number" min={0} step={0.1}
+            value={data.total_kg ?? ''}
+            placeholder="0.0"
+            className="w-28 border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+            onChange={e => setData(d => ({ ...d, total_kg: e.target.value === '' ? null : parseFloat(e.target.value) }))}
+            onBlur={() => save(data)}
+          />
+          <span className="text-xs text-slate-400">kg</span>
+        </div>
       </div>
 
-      <div className="flex items-center gap-3 pt-2 border-t">
-        <label className="text-sm text-slate-600 w-24">Total KG</label>
-        <input
-          type="number" min={0} step={0.1}
-          value={data.total_kg ?? ''}
-          placeholder="0.0"
-          className="w-28 border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
-          onChange={e => setData(d => ({ ...d, total_kg: e.target.value === '' ? null : parseFloat(e.target.value) }))}
-          onBlur={() => save(data)}
-        />
-        <span className="text-xs text-slate-400">kg</span>
-      </div>
+      {/* Right — summary */}
+      {total > 0 && (
+        <div className="rounded-lg border border-blue-100 bg-blue-50 p-5 space-y-3">
+          <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide">Cutting Summary</p>
+          <div className="space-y-2">
+            {COLORS.filter(n => data[`color_${n}_name`]).map(n => (
+              <div key={n} className="flex items-center justify-between text-sm">
+                <span className="text-slate-600">{data[`color_${n}_name`]}</span>
+                <span className="font-semibold text-slate-800">{(data[`color_${n}_qty`] as number).toLocaleString()} pcs</span>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-blue-200 pt-3 flex justify-between text-sm font-bold">
+            <span className="text-blue-700">Total Cut</span>
+            <span className="text-blue-700">{total.toLocaleString()} pcs</span>
+          </div>
+          {data.total_kg && (
+            <div className="flex justify-between text-sm text-slate-500">
+              <span>Fabric weight</span>
+              <span>{data.total_kg} kg</span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

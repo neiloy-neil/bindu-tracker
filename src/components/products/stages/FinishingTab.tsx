@@ -114,40 +114,59 @@ export default function FinishingTab({
     : 0
 
   return (
-    <div className="p-5 space-y-5 max-w-sm">
-      {hasLinkedEntries && (
-        <div className="rounded-md bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">
-          <strong>Received into Finishing</strong> is filled automatically from your Daily Entry Sheet. You don&apos;t need to enter it here.
-        </div>
-      )}
-      <p className="text-xs text-slate-500">Track pieces through each finishing operation. Each field auto-saves on blur.</p>
+    <div className="p-5 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      {/* Left — dates and quantities */}
+      <div className="space-y-5">
+        {hasLinkedEntries && (
+          <div className="rounded-md bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">
+            <strong>Received into Finishing</strong> is filled automatically from your Daily Entry Sheet. You don&apos;t need to enter it here.
+          </div>
+        )}
+        <p className="text-xs text-slate-500">Track pieces through each finishing operation. Each field auto-saves on blur.</p>
 
-      <div className="flex flex-wrap gap-4">
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-slate-700 w-32">Start Date</label>
-          <input type="date"
-            className="border rounded px-3 py-2 text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-400"
-            value={data.start_date ?? ''}
-            onChange={e => setData(d => ({ ...d, start_date: e.target.value || null }))}
-            onBlur={e => { const u = { ...data, start_date: e.target.value || null }; setData(u); save(u) }} />
+        <div className="flex flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-slate-700 w-32">Start Date</label>
+            <input type="date"
+              className="border rounded px-3 py-2 text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-400"
+              value={data.start_date ?? ''}
+              onChange={e => setData(d => ({ ...d, start_date: e.target.value || null }))}
+              onBlur={e => { const u = { ...data, start_date: e.target.value || null }; setData(u); save(u) }} />
+          </div>
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-slate-700 w-36">Completed Date</label>
+            <input type="date"
+              className="border rounded px-3 py-2 text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-400"
+              value={data.completed_date ?? ''}
+              onChange={e => setData(d => ({ ...d, completed_date: e.target.value || null }))}
+              onBlur={e => { const u = { ...data, completed_date: e.target.value || null }; setData(u); save(u) }} />
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-slate-700 w-36">Completed Date</label>
-          <input type="date"
-            className="border rounded px-3 py-2 text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-400"
-            value={data.completed_date ?? ''}
-            onChange={e => setData(d => ({ ...d, completed_date: e.target.value || null }))}
-            onBlur={e => { const u = { ...data, completed_date: e.target.value || null }; setData(u); save(u) }} />
+
+        <div className="space-y-3">
+          <NumField
+            label="Received into Finishing" value={data.received_qty}
+            readOnly={hasLinkedEntries} syncedBadge={hasLinkedEntries}
+            onChange={v => setData(d => ({ ...d, received_qty: v }))}
+            onBlur={v => { const u = { ...data, received_qty: v }; setData(u); save(u) }}
+          />
+          <NumField label="After Ironing" value={data.ironing_qty}
+            onChange={v => setData(d => ({ ...d, ironing_qty: v }))}
+            onBlur={v => { const u = { ...data, ironing_qty: v }; setData(u); save(u) }}
+          />
+          <NumField label="After Folding" value={data.folding_qty}
+            onChange={v => setData(d => ({ ...d, folding_qty: v }))}
+            onBlur={v => { const u = { ...data, folding_qty: v }; setData(u); save(u) }}
+          />
+          <NumField label="Dispatch Ready" value={data.dispatch_ready_qty}
+            onChange={v => setData(d => ({ ...d, dispatch_ready_qty: v }))}
+            onBlur={v => { const u = { ...data, dispatch_ready_qty: v }; setData(u); save(u) }}
+          />
         </div>
       </div>
 
-      <div className="space-y-3">
-        <NumField
-          label="Received into Finishing" value={data.received_qty}
-          readOnly={hasLinkedEntries} syncedBadge={hasLinkedEntries}
-          onChange={v => setData(d => ({ ...d, received_qty: v }))}
-          onBlur={v => { const u = { ...data, received_qty: v }; setData(u); save(u) }}
-        />
+      {/* Right — color breakdown, notes, summary */}
+      <div className="space-y-5">
         <ColorQtyGrid
           label="Received by Color"
           colors={cuttingColors}
@@ -159,48 +178,36 @@ export default function FinishingTab({
             setData(u); save(u)
           }}
         />
-        <NumField label="After Ironing" value={data.ironing_qty}
-          onChange={v => setData(d => ({ ...d, ironing_qty: v }))}
-          onBlur={v => { const u = { ...data, ironing_qty: v }; setData(u); save(u) }}
-        />
-        <NumField label="After Folding" value={data.folding_qty}
-          onChange={v => setData(d => ({ ...d, folding_qty: v }))}
-          onBlur={v => { const u = { ...data, folding_qty: v }; setData(u); save(u) }}
-        />
-        <NumField label="Dispatch Ready" value={data.dispatch_ready_qty}
-          onChange={v => setData(d => ({ ...d, dispatch_ready_qty: v }))}
-          onBlur={v => { const u = { ...data, dispatch_ready_qty: v }; setData(u); save(u) }}
-        />
-      </div>
 
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-slate-700">Notes</label>
-        <textarea
-          rows={2}
-          value={data.notes ?? ''}
-          placeholder="Any issues, delays, or remarks…"
-          className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none"
-          onChange={e => setData(d => ({ ...d, notes: e.target.value || null }))}
-          onBlur={e => { const v = e.target.value || null; const u = { ...data, notes: v }; setData(u); save(u) }}
-        />
-      </div>
-
-      {data.dispatch_ready_qty > 0 && (
-        <div className="rounded-lg bg-purple-50 border border-purple-200 p-3 space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="font-medium text-purple-700">Dispatch Ready</span>
-            <span className="font-bold text-purple-800">{data.dispatch_ready_qty.toLocaleString()} pcs</span>
-          </div>
-          {data.received_qty > 0 && (
-            <>
-              <div className="h-1.5 bg-purple-200 rounded-full overflow-hidden">
-                <div className="h-full bg-purple-500 rounded-full transition-all" style={{ width: `${Math.min(flowPct, 100)}%` }} />
-              </div>
-              <p className="text-xs text-purple-600">{flowPct}% of received through finishing</p>
-            </>
-          )}
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-slate-700">Notes</label>
+          <textarea
+            rows={3}
+            value={data.notes ?? ''}
+            placeholder="Any issues, delays, or remarks…"
+            className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none"
+            onChange={e => setData(d => ({ ...d, notes: e.target.value || null }))}
+            onBlur={e => { const v = e.target.value || null; const u = { ...data, notes: v }; setData(u); save(u) }}
+          />
         </div>
-      )}
+
+        {data.dispatch_ready_qty > 0 && (
+          <div className="rounded-lg bg-purple-50 border border-purple-200 p-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="font-medium text-purple-700">Dispatch Ready</span>
+              <span className="font-bold text-purple-800">{data.dispatch_ready_qty.toLocaleString()} pcs</span>
+            </div>
+            {data.received_qty > 0 && (
+              <>
+                <div className="h-1.5 bg-purple-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-purple-500 rounded-full transition-all" style={{ width: `${Math.min(flowPct, 100)}%` }} />
+                </div>
+                <p className="text-xs text-purple-600">{flowPct}% of received through finishing</p>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

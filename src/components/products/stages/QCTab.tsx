@@ -102,59 +102,105 @@ export default function QCTab({
   if (loading) return <div className="space-y-3 p-4">{Array.from({length:5}).map((_,i)=><Skeleton key={i} className="h-8 w-full"/>)}</div>
 
   return (
-    <div className="p-4 max-w-xl space-y-0">
-      {hasLinkedEntries && (
-        <div className="mb-3 rounded-md bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">
-          Quantities marked <strong>auto-synced</strong> are computed from the Daily Entry Sheet and cannot be edited here.
-        </div>
-      )}
+    <div className="p-4 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      {/* Left — form fields */}
+      <div className="space-y-0">
+        {hasLinkedEntries && (
+          <div className="mb-3 rounded-md bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">
+            Quantities marked <strong>auto-synced</strong> are computed from the Daily Entry Sheet and cannot be edited here.
+          </div>
+        )}
 
-      <Field label="Start Date">
-        <input type="date"
-          className="border rounded px-2 py-1 text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-400"
-          value={data.start_date ?? ''}
-          onChange={e => setData(d => ({ ...d, start_date: e.target.value || null }))}
-          onBlur={e => { const v = e.target.value || null; const u = { ...data, start_date: v }; setData(u); save(u) }} />
-      </Field>
+        <Field label="Start Date">
+          <input type="date"
+            className="border rounded px-2 py-1 text-sm w-44 focus:outline-none focus:ring-1 focus:ring-blue-400"
+            value={data.start_date ?? ''}
+            onChange={e => setData(d => ({ ...d, start_date: e.target.value || null }))}
+            onBlur={e => { const v = e.target.value || null; const u = { ...data, start_date: v }; setData(u); save(u) }} />
+        </Field>
 
-      <Field label="Status">
-        <Select value={data.status ?? ''} onValueChange={v => set('status', v as QcStatus || null)}>
-          <SelectTrigger className="w-36 h-8 text-sm"><SelectValue placeholder="Select status" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">— None —</SelectItem>
-            {QC_STATUS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </Field>
+        <Field label="Status">
+          <Select value={data.status ?? ''} onValueChange={v => set('status', v as QcStatus || null)}>
+            <SelectTrigger className="w-36 h-8 text-sm"><SelectValue placeholder="Select status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">— None —</SelectItem>
+              {QC_STATUS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </Field>
 
-      <Field label="QC Received">
-        {hasLinkedEntries ? <SyncedQty value={data.in_qty} /> : numInput('in_qty')}
-      </Field>
+        <Field label="QC Received">
+          {hasLinkedEntries ? <SyncedQty value={data.in_qty} /> : numInput('in_qty')}
+        </Field>
 
-      <Field label="QC Output (Pass)">
-        {hasLinkedEntries ? <SyncedQty value={data.out_qty} /> : numInput('out_qty')}
-      </Field>
+        <Field label="QC Output (Pass)">
+          {hasLinkedEntries ? <SyncedQty value={data.out_qty} /> : numInput('out_qty')}
+        </Field>
 
-      <Field label="Reject">
-        <div className="flex items-center gap-2">
-          {hasLinkedEntries ? <SyncedQty value={data.reject_qty} /> : numInput('reject_qty')}
-          <span className="text-xs text-red-500 font-medium">{rejectRate}% reject rate</span>
-        </div>
-      </Field>
+        <Field label="Reject">
+          <div className="flex items-center gap-2">
+            {hasLinkedEntries ? <SyncedQty value={data.reject_qty} /> : numInput('reject_qty')}
+            <span className="text-xs text-red-500 font-medium">{rejectRate}% reject rate</span>
+          </div>
+        </Field>
 
-      <Field label="Alter">
-        {hasLinkedEntries ? <SyncedQty value={data.alter_qty} /> : numInput('alter_qty')}
-      </Field>
+        <Field label="Alter">
+          {hasLinkedEntries ? <SyncedQty value={data.alter_qty} /> : numInput('alter_qty')}
+        </Field>
 
-      <Field label="Spot">
-        {hasLinkedEntries ? <SyncedQty value={data.spot_qty} /> : numInput('spot_qty')}
-      </Field>
+        <Field label="Spot">
+          {hasLinkedEntries ? <SyncedQty value={data.spot_qty} /> : numInput('spot_qty')}
+        </Field>
+      </div>
 
-      <Field label="Issues Total">
-        <Badge variant="secondary" className="bg-red-50 text-red-700">
-          {data.reject_qty + data.alter_qty + data.spot_qty} pcs
-        </Badge>
-      </Field>
+      {/* Right — defect summary */}
+      <div className="space-y-3">
+        {(data.reject_qty + data.alter_qty + data.spot_qty) > 0 ? (
+          <div className="rounded-lg border border-red-100 bg-red-50 p-5 space-y-3">
+            <p className="text-xs font-semibold text-red-500 uppercase tracking-wide">Defect Summary</p>
+            <div className="space-y-2">
+              {data.reject_qty > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Rejected</span>
+                  <span className="font-semibold text-red-700">{data.reject_qty.toLocaleString()} pcs</span>
+                </div>
+              )}
+              {data.alter_qty > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Altered</span>
+                  <span className="font-semibold text-red-600">{data.alter_qty.toLocaleString()} pcs</span>
+                </div>
+              )}
+              {data.spot_qty > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Spot</span>
+                  <span className="font-semibold text-orange-600">{data.spot_qty.toLocaleString()} pcs</span>
+                </div>
+              )}
+              <div className="border-t border-red-200 pt-3 flex justify-between text-sm font-bold">
+                <span className="text-red-700">Total Issues</span>
+                <span className="text-red-700">{(data.reject_qty + data.alter_qty + data.spot_qty).toLocaleString()} pcs</span>
+              </div>
+            </div>
+            {rejectRate !== '0.0' && (
+              <p className="text-xs text-red-500">{rejectRate}% reject rate</p>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-green-100 bg-green-50 p-5">
+            <p className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">Defect Summary</p>
+            <p className="text-sm text-green-700">No defects recorded</p>
+          </div>
+        )}
+        {data.out_qty > 0 && (
+          <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 flex justify-between text-sm">
+            <span className="text-slate-500">QC Pass rate</span>
+            <span className="font-semibold text-green-700">
+              {data.in_qty > 0 ? Math.round((data.out_qty / data.in_qty) * 100) : 100}%
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
