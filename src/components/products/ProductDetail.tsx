@@ -300,7 +300,7 @@ export default function ProductDetail({
       <BentoCard noPadding>
         <div className="p-6 pb-0">
           <h3 className="text-sm font-semibold text-slate-700 mb-1">Daily Activity Log</h3>
-          <p className="text-xs text-slate-400 mb-4">All daily entry sheet records linked to this product — automatically collected from the Daily Entry Sheet.</p>
+          <p className="text-xs text-slate-400 mb-4">All activity logged from the Product Tracker for this product — updates to stages, quantities, and dispatches appear here automatically.</p>
         </div>
         <ProductActivityPanel rows={dailyActivity} />
       </BentoCard>

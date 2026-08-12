@@ -13,6 +13,7 @@ export async function refreshProductStage(
     { data: sew },
     { data: qc },
     { data: finish },
+    { data: dispatched },
   ] = await Promise.all([
     supabase.from('products').select('complete_date').eq('id', productId).single(),
     supabase.from('cutting').select('total_qty').eq('product_id', productId).maybeSingle(),
@@ -20,12 +21,16 @@ export async function refreshProductStage(
     supabase.from('sewing').select('out_qty, status').eq('product_id', productId).maybeSingle(),
     supabase.from('qc').select('in_qty, out_qty, status').eq('product_id', productId).maybeSingle(),
     supabase.from('finishing').select('received_qty').eq('product_id', productId).maybeSingle(),
+    // If any dispatch row exists, the product has left Finishing — never regress below it
+    supabase.from('branch_dispatch').select('id').eq('product_id', productId).gt('qty', 0).limit(1),
   ])
 
   let stage: ProductStage = 'Cutting'
 
   if (product?.complete_date) {
     stage = 'Completed'
+  } else if ((dispatched?.length ?? 0) > 0) {
+    stage = 'Finishing'
   } else if ((finish?.received_qty ?? 0) > 0) {
     // Pieces are in finishing — show Finishing regardless of QC status
     stage = 'Finishing'

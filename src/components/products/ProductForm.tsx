@@ -13,6 +13,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { productSchema, type ProductFormData } from '@/lib/validations'
 import ImageUpload from '@/components/shared/ImageUpload'
 import { BentoCard } from '@/components/shared/BentoCard'
+import { logActivity } from '@/lib/utils/logActivity'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function ProductForm({ initialData }: { initialData?: any }) {
@@ -49,6 +50,11 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
       if (initialData) {
         const { error } = await supabase.from('products').update(payload).eq('id', initialData.id)
         if (error) throw new Error(error.message)
+        const changes: string[] = []
+        if (payload.product_name !== initialData.product_name) changes.push(`renamed to "${payload.product_name}"`)
+        if (String(payload.target_qty ?? '') !== String(initialData.target_qty ?? '')) changes.push(`target qty: ${payload.target_qty ?? 'cleared'}`)
+        if ((payload.target_dispatch_date ?? '') !== (initialData.target_dispatch_date ?? '')) changes.push(`dispatch date: ${payload.target_dispatch_date ?? 'cleared'}`)
+        logActivity(supabase, initialData.id, payload.product_code, payload.product_name, 'Edit', changes.join('; ') || 'details updated').catch(() => {})
         return initialData.id
       } else {
         const { data: res, error } = await supabase.from('products').insert(payload).select().single()

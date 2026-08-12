@@ -75,6 +75,11 @@ export default function DailyLogs() {
         <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => changeDate(1)}>
           <ChevronRight className="h-4 w-4" />
         </Button>
+        {date !== today && (
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setDate(today)}>
+            Today
+          </Button>
+        )}
         <span className="text-sm text-slate-500">{format(parseISO(date), 'EEEE, dd MMM yyyy')}</span>
         <span className="ml-auto text-xs text-slate-400">{entries.length} event{entries.length !== 1 ? 's' : ''}</span>
       </div>
