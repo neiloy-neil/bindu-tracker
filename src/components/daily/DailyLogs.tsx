@@ -39,8 +39,12 @@ export default function DailyLogs() {
 
   const fetchLogs = useCallback(async (d: string) => {
     setLoading(true)
-    const start = `${d}T00:00:00`
-    const end   = `${d}T23:59:59`
+    const off = -new Date().getTimezoneOffset()
+    const h = String(Math.floor(Math.abs(off) / 60)).padStart(2, '0')
+    const m = String(Math.abs(off) % 60).padStart(2, '0')
+    const tz = (off >= 0 ? '+' : '-') + h + ':' + m
+    const start = `${d}T00:00:00${tz}`
+    const end   = `${d}T23:59:59${tz}`
     const { data, error } = await supabase
       .from('product_activity_log')
       .select('id, product_id, product_code, product_name, action, details, created_at')
