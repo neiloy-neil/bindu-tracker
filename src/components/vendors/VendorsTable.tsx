@@ -127,7 +127,7 @@ export default function VendorsTable() {
       <div className="p-4 border-b flex justify-between items-center bg-white">
         <h3 className="font-medium text-slate-800">All Vendors</h3>
         {!isAdding && !editingId && (
-          <Button size="sm" onClick={() => { setIsAdding(true); setFormData({ name: '', type: 'both', active: true }) }} className="bg-[#1A3557] hover:bg-[#142a45]">
+          <Button size="sm" onClick={() => { setIsAdding(true); setFormData({ name: '', type: 'both', active: true }) }} className="bg-[#0D1F35] hover:bg-[#0D1F35]">
             <Plus className="h-4 w-4 mr-1" /> Add Vendor
           </Button>
         )}

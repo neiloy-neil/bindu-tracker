@@ -28,15 +28,17 @@ export default function ReportsPage() {
   }, [selectedBranch])
 
   return (
-    <div className="space-y-5 max-w-7xl">
-      <div>
-        <h2 className="text-xl font-semibold text-slate-800">Reports</h2>
-        <p className="text-sm text-slate-500 mt-0.5">
-          Date-range production reports with CSV export
-          {selectedBranch && (
-            <span className="ml-2 text-sky-600 font-medium">· filtered to {selectedBranch}</span>
-          )}
-        </p>
+    <div className="space-y-6 max-w-7xl animate-fade-up">
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-2xl font-black text-foreground tracking-tight">Reports & Analytics</h2>
+          <p className="text-sm font-medium text-muted-foreground mt-1">
+            Date-range production reports with CSV export
+            {selectedBranch && (
+              <span className="ml-2 text-primary font-bold bg-primary/10 px-2 py-0.5 rounded-md">· filtered to {selectedBranch}</span>
+            )}
+          </p>
+        </div>
       </div>
 
       <Tabs defaultValue="daily">

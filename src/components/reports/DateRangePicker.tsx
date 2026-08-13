@@ -35,7 +35,7 @@ export default function DateRangePicker({ value, onChange }: Props) {
             key={p.label}
             size="sm"
             variant={active ? 'default' : 'outline'}
-            className={active ? 'bg-[#1A3557] hover:bg-[#142a45] h-7 text-xs' : 'h-7 text-xs'}
+            className={active ? 'bg-[#0D1F35] hover:bg-[#0D1F35] h-7 text-xs' : 'h-7 text-xs'}
             onClick={() => { setCustom(false); onChange(r) }}
           >
             {p.label}

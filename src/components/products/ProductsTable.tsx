@@ -8,24 +8,22 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, PackageOpen, ArrowUpRight } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BentoCard } from '@/components/shared/BentoCard'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { PackageOpen } from 'lucide-react'
 import type { ProductSummaryRow, ProductStage } from '@/types/app'
 import { PRODUCT_STAGES } from '@/constants'
 import { formatDate } from '@/lib/utils/formatters'
 
 const STAGE_COLORS: Record<ProductStage, string> = {
-  Cutting:    'bg-blue-100 text-blue-700',
-  Printing:   'bg-teal-100 text-teal-700',
-  Sewing:     'bg-orange-100 text-orange-700',
-  QC:         'bg-green-100 text-green-700',
-  Finishing:  'bg-purple-100 text-purple-700',
-  Dispatched: 'bg-sky-100 text-sky-700',
-  Completed:  'bg-slate-100 text-slate-600',
+  Cutting:    'bg-blue-50 text-blue-700 border-blue-200/60',
+  Printing:   'bg-teal-50 text-teal-700 border-teal-200/60',
+  Sewing:     'bg-orange-50 text-orange-700 border-orange-200/60',
+  QC:         'bg-green-50 text-green-700 border-green-200/60',
+  Finishing:  'bg-purple-50 text-purple-700 border-purple-200/60',
+  Dispatched: 'bg-sky-50 text-sky-700 border-sky-200/60',
+  Completed:  'bg-slate-50 text-slate-600 border-slate-200/60',
 }
 
 export default function ProductsTable({ fixedStage }: { fixedStage?: ProductStage }) {
@@ -75,24 +73,34 @@ export default function ProductsTable({ fixedStage }: { fixedStage?: ProductStag
     return matchStage && matchSearch
   })
 
-  const th = 'px-3 py-2 text-left text-xs font-semibold text-slate-600 whitespace-nowrap'
-  const td = 'px-3 py-2 text-sm text-slate-700 whitespace-nowrap'
+  const th = 'px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap text-left sticky top-0 bg-slate-50/95 backdrop-blur-sm shadow-[0_1px_0_0_rgba(0,0,0,0.05)] z-10'
+  const td = 'px-4 py-3 text-sm text-foreground whitespace-nowrap align-middle'
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2 h-4 w-4 text-slate-400" />
+      {/* Products page specific header */}
+      {!fixedStage && (
+        <div className="flex items-start justify-between animate-fade-up">
+          <div>
+            <h2 className="text-2xl font-black text-foreground tracking-tight">Product Library</h2>
+            <p className="text-sm font-medium text-muted-foreground mt-1">Manage all designs, view their status, and track inventory.</p>
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center gap-4 flex-wrap bg-white/50 p-3 rounded-xl border border-border/50">
+        <div className="relative group flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
           <Input
             placeholder="Search code or name…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-8 h-8 text-sm w-52"
+            className="pl-9 h-9 text-sm w-full bg-white border-border/80 shadow-sm transition-all focus:border-primary"
           />
         </div>
         {!fixedStage && (
           <Select value={stageFilter} onValueChange={(v) => handleStageChange(v ?? 'all')}>
-            <SelectTrigger className="h-8 text-sm w-36">
+            <SelectTrigger className="h-9 text-sm w-40 bg-white border-border/80 shadow-sm font-semibold">
               <SelectValue placeholder="All Stages" />
             </SelectTrigger>
             <SelectContent>
@@ -102,118 +110,112 @@ export default function ProductsTable({ fixedStage }: { fixedStage?: ProductStag
           </Select>
         )}
         <Link href="/dashboard/products/new" className="ml-auto">
-          <Button size="sm" className="bg-[#1A3557] hover:bg-[#142a45]">
-            <Plus className="h-4 w-4 mr-1" /> New Product
+          <Button size="sm" className="h-9 px-4 gap-2 font-bold shadow-sm hover:shadow hover:-translate-y-0.5 transition-all">
+            <Plus className="h-4 w-4" /> New Product
           </Button>
         </Link>
       </div>
 
-      <BentoCard noPadding className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead className="bg-slate-50 border-b border-slate-200">
-            <tr>
-              <th className={th + ' w-12'}>Image</th>
-              <th className={th}>Code</th>
-              <th className={th}>Name</th>
-              <th className={th}>Stage</th>
-              <th className={th + ' hidden md:table-cell'}>Start Date</th>
-              <th className={th + ' hidden md:table-cell'}>Cutting</th>
-              <th className={th + ' hidden lg:table-cell'}>Print</th>
-              <th className={th + ' hidden lg:table-cell'}>Sew</th>
-              <th className={th + ' hidden lg:table-cell'}>QC</th>
-              <th className={th + ' hidden md:table-cell'}>Stock</th>
-              <th className={th}></th>
-            </tr>
-          </thead>
-          <AnimatePresence mode="wait">
-            <motion.tbody
-              key={stageFilter} // Remount to trigger animation when filter changes
-              initial="hidden"
-              animate="visible"
-              variants={{
-                visible: { transition: { staggerChildren: 0.03 } }
-              }}
-            >
-              {loading
-              ? Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i} className="border-b border-slate-100">
-                  <td colSpan={11} className="p-3"><Skeleton className="h-5 w-full" /></td>
-                </tr>
-              ))
-              : filtered.length === 0
-              ? (
-                <tr>
-                  <td colSpan={11} className="p-4">
-                    <EmptyState
-                      icon={PackageOpen}
-                      title={search || stageFilter !== 'all' ? 'No products match filter' : 'No products yet'}
-                      description={search || stageFilter !== 'all' 
-                        ? 'Try adjusting your search query or stage filter.' 
-                        : 'Your production pipeline is empty. Click "New Product" to add one.'}
-                    />
-                  </td>
-                </tr>
-              )
-              : filtered.map((p) => (
-                <motion.tr
-                  key={p.id}
-                  variants={{
-                    hidden: { opacity: 0, y: 10 },
-                    visible: { opacity: 1, y: 0 }
-                  }}
-                  className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
-                >
-                  <td className={td}>
-                    {p.image_url ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={p.image_url} alt="" className="w-8 h-8 rounded object-cover shadow-sm border bg-white" />
-                    ) : (
-                      <div className="w-8 h-8 rounded bg-slate-50 border border-dashed border-slate-300 flex items-center justify-center text-[10px] text-slate-400">?</div>
-                    )}
-                  </td>
-                  <td className={`${td} font-mono font-medium text-[#1A3557]`}>{p.product_code}</td>
-                  <td className={td}>{p.product_name}</td>
-                  <td className={td}>
-                    <Badge className={`text-xs ${STAGE_COLORS[p.current_stage] ?? ''}`} variant="secondary">
+      <div className="space-y-3">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={stageFilter} // Remount to trigger animation when filter changes
+            initial="hidden"
+            animate="visible"
+            variants={{
+              visible: { transition: { staggerChildren: 0.05 } }
+            }}
+            className="flex flex-col gap-3"
+          >
+            {loading
+            ? Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-xl" />
+            ))
+            : filtered.length === 0
+            ? (
+              <div className="bg-white rounded-xl border border-slate-200 p-12 shadow-sm">
+                <EmptyState
+                  icon={PackageOpen}
+                  title={search || stageFilter !== 'all' ? 'No products match filter' : 'No products yet'}
+                  description={search || stageFilter !== 'all' 
+                    ? 'Try adjusting your search query or stage filter.' 
+                    : 'Your production pipeline is empty. Click "New Product" to add one.'}
+                />
+              </div>
+            )
+            : filtered.map((p) => (
+              <motion.div
+                key={p.id}
+                variants={{
+                  hidden: { opacity: 0, y: 15 },
+                  visible: { opacity: 1, y: 0 }
+                }}
+                className="group flex flex-col sm:flex-row bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all cursor-pointer overflow-hidden relative"
+                onClick={() => router.push(`/dashboard/products/${p.id}`)}
+              >
+                {/* Left: Image */}
+                <div className="sm:w-32 h-32 sm:h-auto bg-slate-50 border-r border-slate-100 flex items-center justify-center shrink-0">
+                  {p.image_url ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={p.image_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-2xl font-bold text-slate-300">?</span>
+                  )}
+                </div>
+
+                {/* Middle: Details */}
+                <div className="flex-1 p-4 md:p-5 flex flex-col justify-center">
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="font-mono font-bold text-sm text-slate-900">{p.product_code}</span>
+                    <Badge className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border shadow-sm ${STAGE_COLORS[p.current_stage] ?? ''}`} variant="outline">
                       {p.current_stage}
                     </Badge>
-                  </td>
-                  <td className={td + ' hidden md:table-cell'}>{formatDate(p.production_start_date)}</td>
-                  <td className={td + ' hidden md:table-cell'}>{p.cutting_total_qty ?? '—'}</td>
-                  <td className={td + ' hidden lg:table-cell'}>
-                    {p.print_status
-                      ? <Badge variant="secondary" className="text-xs">{p.print_status}</Badge>
-                      : '—'}
-                  </td>
-                  <td className={td + ' hidden lg:table-cell'}>
-                    {p.sew_status
-                      ? <Badge variant="secondary" className="text-xs">{p.sew_status}</Badge>
-                      : '—'}
-                  </td>
-                  <td className={td + ' hidden lg:table-cell'}>
-                    {p.qc_status
-                      ? <Badge variant="secondary" className="text-xs">{p.qc_status}</Badge>
-                      : '—'}
-                  </td>
-                  <td className={td + ' hidden md:table-cell'}>{p.stock_total ?? '—'}</td>
-                  <td className={td}>
-                    <Link
-                      href={`/dashboard/products/${p.id}`}
-                      className="text-xs text-[#1A3557] hover:underline font-medium"
-                    >
-                      View →
-                    </Link>
-                  </td>
-                </motion.tr>
-              ))
-            }
-          </motion.tbody>
-          </AnimatePresence>
-        </table>
-      </BentoCard>
+                  </div>
+                  <h3 className="text-base font-semibold text-slate-700 truncate mb-3">{p.product_name}</h3>
+                  
+                  {/* Stats Row */}
+                  <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-500">
+                    <div className="flex flex-col">
+                      <span className="uppercase text-[10px] text-slate-400 mb-0.5">Start Date</span>
+                      <span>{formatDate(p.production_start_date)}</span>
+                    </div>
+                    <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
+                    <div className="flex flex-col">
+                      <span className="uppercase text-[10px] text-slate-400 mb-0.5">Cut Qty</span>
+                      <span className="text-slate-700 font-bold">{p.cutting_total_qty ?? '—'}</span>
+                    </div>
+                    <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
+                    <div className="flex flex-col">
+                      <span className="uppercase text-[10px] text-slate-400 mb-0.5">Stock</span>
+                      <span className="text-slate-700 font-bold">{p.stock_total ?? '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Quick Status & Action */}
+                <div className="p-4 md:p-5 border-t sm:border-t-0 sm:border-l border-slate-100 bg-slate-50/50 flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 sm:w-48 shrink-0">
+                  <div className="flex gap-2">
+                    {p.print_status && <Badge variant="secondary" className="text-[10px] font-bold bg-white border-slate-200 text-slate-600 shadow-sm" title="Print Status">{p.print_status}</Badge>}
+                    {p.sew_status && <Badge variant="secondary" className="text-[10px] font-bold bg-white border-slate-200 text-slate-600 shadow-sm" title="Sew Status">{p.sew_status}</Badge>}
+                    {p.qc_status && <Badge variant="secondary" className="text-[10px] font-bold bg-white border-slate-200 text-slate-600 shadow-sm" title="QC Status">{p.qc_status}</Badge>}
+                  </div>
+                  <Link
+                    href={`/dashboard/products/${p.id}`}
+                    onClick={e => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 text-[11px] uppercase tracking-wider font-bold text-slate-400 group-hover:text-primary transition-colors duration-200"
+                  >
+                    Open <ArrowUpRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              </motion.div>
+            ))
+          }
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
       {!loading && (
-        <p className="text-xs text-slate-400 text-right">
+        <p className="text-xs font-bold text-slate-400 text-right tracking-wide uppercase">
           {filtered.length} product{filtered.length !== 1 ? 's' : ''}
           {stageFilter !== 'all' && ` in ${stageFilter}`}
         </p>

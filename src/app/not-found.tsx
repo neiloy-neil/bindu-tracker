@@ -13,7 +13,7 @@ export default function NotFound() {
         The page you are looking for doesn&apos;t exist or has been moved. Check the URL or navigate back to the dashboard.
       </p>
       <Link href="/dashboard">
-        <Button size="lg" className="bg-[#1A3557] hover:bg-[#1A3557]/90 text-white">
+        <Button size="lg" className="bg-[#0D1F35] hover:bg-[#0D1F35]/90 text-white">
           Return to Dashboard
         </Button>
       </Link>

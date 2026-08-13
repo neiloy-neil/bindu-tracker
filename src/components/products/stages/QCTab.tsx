@@ -35,18 +35,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-function SyncedQty({ value }: { value: number }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm font-medium text-slate-700 w-28 text-right">{value.toLocaleString()}</span>
-      <Badge variant="secondary" className="bg-teal-50 text-teal-600 text-[10px] font-normal">auto-synced</Badge>
-    </div>
-  )
-}
+
 
 export default function QCTab({
-  productId, productCode, productName, onStageChange, hasLinkedEntries = false,
-}: { productId: string; productCode: string; productName: string; onStageChange: (s: ProductStage) => void; hasLinkedEntries?: boolean }) {
+  productId, productCode, productName, onStageChange
+}: { productId: string; productCode: string; productName: string; onStageChange: (s: ProductStage) => void }) {
   const supabase = createClient()
   const [data, setData] = useState<QCRow>(EMPTY(productId))
   const [loading, setLoading] = useState(true)
@@ -105,11 +98,7 @@ export default function QCTab({
     <div className="p-4 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
       {/* Left — form fields */}
       <div className="space-y-0">
-        {hasLinkedEntries && (
-          <div className="mb-3 rounded-md bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">
-            Quantities marked <strong>auto-synced</strong> are computed from the Daily Entry Sheet and cannot be edited here.
-          </div>
-        )}
+
 
         <Field label="Start Date">
           <input type="date"
@@ -130,26 +119,26 @@ export default function QCTab({
         </Field>
 
         <Field label="QC Received">
-          {hasLinkedEntries ? <SyncedQty value={data.in_qty} /> : numInput('in_qty')}
+          {numInput('in_qty')}
         </Field>
 
         <Field label="QC Output (Pass)">
-          {hasLinkedEntries ? <SyncedQty value={data.out_qty} /> : numInput('out_qty')}
+          {numInput('out_qty')}
         </Field>
 
         <Field label="Reject">
           <div className="flex items-center gap-2">
-            {hasLinkedEntries ? <SyncedQty value={data.reject_qty} /> : numInput('reject_qty')}
+            {numInput('reject_qty')}
             <span className="text-xs text-red-500 font-medium">{rejectRate}% reject rate</span>
           </div>
         </Field>
 
         <Field label="Alter">
-          {hasLinkedEntries ? <SyncedQty value={data.alter_qty} /> : numInput('alter_qty')}
+          {numInput('alter_qty')}
         </Field>
 
         <Field label="Spot">
-          {hasLinkedEntries ? <SyncedQty value={data.spot_qty} /> : numInput('spot_qty')}
+          {numInput('spot_qty')}
         </Field>
       </div>
 

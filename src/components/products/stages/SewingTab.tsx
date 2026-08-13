@@ -61,14 +61,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-function SyncedQty({ value }: { value: number }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm font-medium text-slate-700 w-28 text-right">{value.toLocaleString()}</span>
-      <Badge variant="secondary" className="bg-teal-50 text-teal-600 text-[10px] font-normal">auto-synced</Badge>
-    </div>
-  )
-}
+
 
 function ReceiptColorBreakdown({ receipt, colors }: { receipt: Receipt; colors: CuttingColors }) {
   const colorQtys = [1, 2, 3, 4, 5, 6].map(n => ({
@@ -88,8 +81,8 @@ function ReceiptColorBreakdown({ receipt, colors }: { receipt: Receipt; colors: 
 }
 
 export default function SewingTab({
-  productId, productCode, productName, onStageChange, hasLinkedEntries = false,
-}: { productId: string; productCode: string; productName: string; onStageChange: (s: ProductStage) => void; hasLinkedEntries?: boolean }) {
+  productId, productCode, productName, onStageChange
+}: { productId: string; productCode: string; productName: string; onStageChange: (s: ProductStage) => void }) {
   const supabase = createClient()
   const [data, setData] = useState<SewRow>(EMPTY(productId))
   const [receipts, setReceipts] = useState<Receipt[]>([])
@@ -194,11 +187,7 @@ export default function SewingTab({
     <div className="p-4 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
       {/* Left — vendor, status, dates, quantities */}
       <div className="space-y-0">
-        {hasLinkedEntries && (
-          <div className="mb-3 rounded-md bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">
-            Numbers marked <strong>auto-synced</strong> are calculated automatically from your Daily Entry Sheet records. You don&apos;t need to type them here.
-          </div>
-        )}
+
 
         <Field label="Sewing Vendor">
           <VendorSelect type="sewing" value={data.vendor_name} onChange={v => set('vendor_name', v)} />
@@ -221,12 +210,10 @@ export default function SewingTab({
         </Field>
 
         <Field label="Sent Out (QTY)">
-          {hasLinkedEntries ? <SyncedQty value={data.out_qty} /> : (
-            <input type="number" min={0} className={inputCls + ' w-28 text-right'} value={data.out_qty || ''}
-              placeholder="0"
-              onChange={e => setData(d => ({ ...d, out_qty: parseInt(e.target.value) || 0 }))}
-              onBlur={e => { const v = parseInt(e.target.value) || 0; const u = { ...data, out_qty: v }; setData(u); saveParent(u) }} />
-          )}
+          <input type="number" min={0} className={inputCls + ' w-28 text-right'} value={data.out_qty || ''}
+            placeholder="0"
+            onChange={e => setData(d => ({ ...d, out_qty: parseInt(e.target.value) || 0 }))}
+            onBlur={e => { const v = parseInt(e.target.value) || 0; const u = { ...data, out_qty: v }; setData(u); saveParent(u) }} />
         </Field>
 
         <Field label="Short (QTY)">

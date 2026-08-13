@@ -172,7 +172,7 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
       </div>
 
       <div className="flex gap-3 pt-2">
-        <Button type="submit" className="bg-[#1A3557] hover:bg-[#142a45]" disabled={isSubmitting}>
+        <Button type="submit" className="bg-[#0D1F35] hover:bg-[#0D1F35]" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {initialData ? 'Update Product' : 'Create Product'}
         </Button>

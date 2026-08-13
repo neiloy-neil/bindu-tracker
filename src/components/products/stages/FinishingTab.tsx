@@ -47,9 +47,6 @@ function NumField({ label, value, onChange, onBlur, readOnly, syncedBadge }: {
         <label className="text-sm font-medium text-slate-700 w-40">{label}</label>
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-slate-700 w-32 text-right">{value.toLocaleString()}</span>
-          {syncedBadge && (
-            <Badge variant="secondary" className="bg-teal-50 text-teal-600 text-[10px] font-normal">auto-synced</Badge>
-          )}
         </div>
       </div>
     )
@@ -71,8 +68,8 @@ function NumField({ label, value, onChange, onBlur, readOnly, syncedBadge }: {
 }
 
 export default function FinishingTab({
-  productId, productCode, productName, onStageChange, hasLinkedEntries = false,
-}: { productId: string; productCode: string; productName: string; onStageChange: (s: ProductStage) => void; hasLinkedEntries?: boolean }) {
+  productId, productCode, productName, onStageChange
+}: { productId: string; productCode: string; productName: string; onStageChange: (s: ProductStage) => void }) {
   const supabase = createClient()
   const [data, setData] = useState<FinishingData>(EMPTY(productId))
   const [cuttingColors, setCuttingColors] = useState<CuttingColors>(Array.from({ length: 6 }, () => ({ name: null })))
@@ -117,11 +114,7 @@ export default function FinishingTab({
     <div className="p-5 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
       {/* Left — dates and quantities */}
       <div className="space-y-5">
-        {hasLinkedEntries && (
-          <div className="rounded-md bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">
-            <strong>Received into Finishing</strong> is filled automatically from your Daily Entry Sheet. You don&apos;t need to enter it here.
-          </div>
-        )}
+
         <p className="text-xs text-slate-500">Track pieces through each finishing operation. Each field auto-saves on blur.</p>
 
         <div className="flex flex-wrap gap-4">
@@ -146,7 +139,6 @@ export default function FinishingTab({
         <div className="space-y-3">
           <NumField
             label="Received into Finishing" value={data.received_qty}
-            readOnly={hasLinkedEntries} syncedBadge={hasLinkedEntries}
             onChange={v => setData(d => ({ ...d, received_qty: v }))}
             onBlur={v => { const u = { ...data, received_qty: v }; setData(u); save(u) }}
           />
@@ -171,7 +163,6 @@ export default function FinishingTab({
           label="Received by Color"
           colors={cuttingColors}
           values={[1,2,3,4,5,6].map(n => data[`in_color_${n}_qty` as keyof FinishingData] as number)}
-          readOnly={hasLinkedEntries}
           onChange={(i, qty) => {
             const field = `in_color_${i + 1}_qty` as keyof FinishingData
             const u = { ...data, [field]: qty }

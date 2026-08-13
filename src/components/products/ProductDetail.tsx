@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils/formatters'
@@ -8,11 +7,9 @@ import { logActivity } from '@/lib/utils/logActivity'
 import { createClient } from '@/lib/supabase/client'
 import type { ProductStage } from '@/types/app'
 import { PRODUCT_STAGES } from '@/constants'
-import { CheckCircle2, Circle, AlertTriangle, Target, CalendarClock } from 'lucide-react'
+import { AlertTriangle, Check } from 'lucide-react'
 import Link from 'next/link'
 import { differenceInDays, parseISO } from 'date-fns'
-import { BentoGrid } from '@/components/shared/BentoGrid'
-import { BentoCard } from '@/components/shared/BentoCard'
 import ProductActivityPanel from './ProductActivityPanel'
 
 type DailyRow = { entry_date: string; design_code: string; notes: string | null }
@@ -40,13 +37,13 @@ type Product = {
 }
 
 const STAGE_COLORS: Record<ProductStage, string> = {
-  Cutting:    'bg-blue-100 text-blue-700',
-  Printing:   'bg-teal-100 text-teal-700',
-  Sewing:     'bg-orange-100 text-orange-700',
-  QC:         'bg-green-100 text-green-700',
-  Finishing:  'bg-purple-100 text-purple-700',
-  Dispatched: 'bg-sky-100 text-sky-700',
-  Completed:  'bg-slate-100 text-slate-600',
+  Cutting:    'bg-slate-100 text-slate-700',
+  Printing:   'bg-slate-100 text-slate-700',
+  Sewing:     'bg-slate-100 text-slate-700',
+  QC:         'bg-slate-100 text-slate-700',
+  Finishing:  'bg-slate-100 text-slate-700',
+  Dispatched: 'bg-slate-100 text-slate-700',
+  Completed:  'bg-slate-50 text-slate-500',
 }
 
 export default function ProductDetail({
@@ -60,10 +57,13 @@ export default function ProductDetail({
 }) {
   const supabase = createClient()
   const [currentStage, setCurrentStage] = useState<ProductStage>(product.current_stage)
+  const activeTabValue = product.current_stage.toLowerCase() === 'dispatched' || product.current_stage.toLowerCase() === 'completed' ? 'dispatch' : product.current_stage.toLowerCase()
+  const [activeTab, setActiveTab] = useState<string>(activeTabValue)
   const [totalDispatched, setTotalDispatched] = useState(initialDispatched)
 
   const handleStageChange = (stage: ProductStage) => {
     setCurrentStage(stage)
+    setActiveTab(stage.toLowerCase() === 'dispatched' || stage.toLowerCase() === 'completed' ? 'dispatch' : stage.toLowerCase())
     logActivity(supabase, product.id, product.product_code, product.product_name, 'Stage', `Moved to ${stage}`)
   }
   const stageIdx = PRODUCT_STAGES.indexOf(currentStage)
@@ -81,229 +81,154 @@ export default function ProductDetail({
   const isAtRisk = daysUntil !== null && daysUntil <= 5
     && currentStage !== 'Dispatched' && currentStage !== 'Completed'
 
+  const STAGE_RAIL: Record<ProductStage, string> = {
+    Cutting:    'bg-blue-500',
+    Printing:   'bg-teal-500',
+    Sewing:     'bg-orange-500',
+    QC:         'bg-green-500',
+    Finishing:  'bg-purple-500',
+    Dispatched: 'bg-sky-500',
+    Completed:  'bg-slate-400',
+  }
+
+  const STAGE_ACCENT: Record<ProductStage, string> = {
+    Cutting:    'border-l-blue-500',
+    Printing:   'border-l-teal-500',
+    Sewing:     'border-l-orange-500',
+    QC:         'border-l-green-500',
+    Finishing:  'border-l-purple-500',
+    Dispatched: 'border-l-sky-500',
+    Completed:  'border-l-slate-400',
+  }
+
+  const TAB_STAGES = [
+    { value: 'cutting',   label: 'Cutting',   step: 1, stage: 'Cutting'    as ProductStage | null, rail: 'bg-blue-500',   active: 'data-[state=active]:border-b-blue-500 data-[state=active]:text-blue-700'   },
+    { value: 'printing',  label: 'Printing',  step: 2, stage: 'Printing'   as ProductStage | null, rail: 'bg-teal-500',   active: 'data-[state=active]:border-b-teal-500 data-[state=active]:text-teal-700'   },
+    { value: 'sewing',    label: 'Sewing',    step: 3, stage: 'Sewing'     as ProductStage | null, rail: 'bg-orange-500', active: 'data-[state=active]:border-b-orange-500 data-[state=active]:text-orange-700' },
+    { value: 'qc',        label: 'QC',        step: 4, stage: 'QC'         as ProductStage | null, rail: 'bg-green-500',  active: 'data-[state=active]:border-b-green-500 data-[state=active]:text-green-700'  },
+    { value: 'finishing', label: 'Finishing', step: 5, stage: 'Finishing'  as ProductStage | null, rail: 'bg-purple-500', active: 'data-[state=active]:border-b-purple-500 data-[state=active]:text-purple-700' },
+    { value: 'dispatch',  label: 'Dispatch',  step: 6, stage: 'Dispatched' as ProductStage | null, rail: 'bg-sky-500',    active: 'data-[state=active]:border-b-sky-500 data-[state=active]:text-sky-700'     },
+    { value: 'stock',     label: 'Stock',     step: 7, stage: null,                                 rail: 'bg-slate-400', active: 'data-[state=active]:border-b-slate-400 data-[state=active]:text-slate-600'  },
+  ] as const
+
   return (
-    <div className="space-y-6 max-w-5xl">
-      {/* Breadcrumb */}
-      <div className="text-xs text-slate-400">
-        <Link href="/dashboard/products" className="hover:underline">Products</Link>
-        {' / '}
-        <span className="text-slate-600 font-medium">{product.product_code}</span>
+    <div className="space-y-4 max-w-5xl">
+      {/* Breadcrumb + header */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <div className="text-[11px] text-slate-400 mb-1">
+            <Link href="/dashboard/products" className="hover:text-slate-600 transition-colors">Products</Link>
+            <span className="mx-1.5 text-slate-300">/</span>
+            <span className="text-slate-500 font-medium">{product.product_code}</span>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h2 className="text-lg font-bold text-slate-800 font-mono tracking-tight">{product.product_code}</h2>
+            <Badge className={`${STAGE_COLORS[currentStage]} text-[11px]`} variant="secondary">{currentStage}</Badge>
+            {isAtRisk && (
+              <span className="flex items-center gap-1 text-[11px] font-semibold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded">
+                <AlertTriangle className="h-3 w-3" />
+                {daysUntil === 0 ? 'Due today' : daysUntil !== null && daysUntil < 0 ? `${Math.abs(daysUntil)}d overdue` : `${daysUntil}d left`}
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-slate-500 mt-0.5">{product.product_name}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href={`/dashboard/products/${product.id}/edit`}>
+            <Button variant="outline" size="sm" className="h-7 text-[11px] px-3">Edit</Button>
+          </Link>
+        </div>
       </div>
 
-      {/* At-risk banner */}
-      {isAtRisk && (
-        <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 text-red-700 text-sm font-medium">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          {daysUntil === 0
-            ? 'Target dispatch is TODAY — currently in ' + currentStage
-            : daysUntil < 0
-            ? `Overdue by ${Math.abs(daysUntil)} day${Math.abs(daysUntil) !== 1 ? 's' : ''} — still in ${currentStage}`
-            : `${daysUntil} day${daysUntil !== 1 ? 's' : ''} until target dispatch — currently in ${currentStage}`
-          }
-        </div>
-      )}
-
-      {/* Header Grid */}
-      <BentoGrid>
-        {/* Main Info */}
-        <BentoCard className="col-span-full lg:col-span-2 flex flex-col">
-          <div className="flex items-start gap-4 flex-wrap flex-1">
-            {product.image_url && (
-              <div className="flex-shrink-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={product.image_url} alt={product.product_name} className="w-24 h-24 rounded-lg object-cover border shadow-sm bg-slate-50" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0 space-y-2">
-              <div className="flex items-center gap-3 flex-wrap">
-                <h2 className="text-xl font-bold text-slate-800">{product.product_code}</h2>
-                <Badge className={STAGE_COLORS[currentStage]} variant="secondary">{currentStage}</Badge>
-                <Link href={`/dashboard/products/${product.id}/edit`}>
-                  <Button variant="outline" size="sm" className="h-6 text-xs ml-2 px-2">Edit</Button>
-                </Link>
-              </div>
-              <p className="text-slate-600">{product.product_name}</p>
-              <div className="flex flex-wrap gap-4 mt-1 text-xs text-slate-500">
-                {product.production_start_date && <span>Started: {formatDate(product.production_start_date)}</span>}
-                {product.complete_date && <span>Completed: {formatDate(product.complete_date)}</span>}
-              </div>
-              {product.notes && <p className="text-xs text-slate-400 italic pt-2">{product.notes}</p>}
-            </div>
-          </div>
-        </BentoCard>
-
-        {/* Targets & Stats */}
-        <BentoCard className="flex flex-col space-y-5">
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Targets</h3>
-            {product.target_qty && (
-              <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 border rounded-lg px-3 py-2">
-                <Target className="h-4 w-4 text-slate-400" />
-                <span className="font-semibold text-slate-800">{product.target_qty.toLocaleString()}</span>
-                <span>target pcs</span>
-              </div>
-            )}
-            {product.target_dispatch_date && (
-              <div className={`flex items-center gap-2 text-sm rounded-lg px-3 py-2 border ${
-                isAtRisk ? 'bg-red-50 border-red-200 text-red-700' : 'bg-slate-50 border-slate-200 text-slate-600'
-              }`}>
-                <CalendarClock className="h-4 w-4 shrink-0" />
-                <span className="font-semibold">{formatDate(product.target_dispatch_date)}</span>
-                {daysUntil !== null && (
-                  <span className="text-xs ml-1 opacity-80">({daysUntil >= 0 ? `${daysUntil}d left` : `${Math.abs(daysUntil)}d over`})</span>
-                )}
-              </div>
-            )}
-            {!product.target_qty && !product.target_dispatch_date && (
-              <p className="text-sm text-slate-400 italic">No targets set</p>
-            )}
-          </div>
-
-        {/* Dispatch progress bar */}
-        {dispatchPct !== null && (
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-slate-500">Dispatch progress</span>
-              <span className={`font-semibold ${dispatchPct >= 100 ? 'text-green-600' : dispatchPct >= 60 ? 'text-sky-600' : 'text-slate-600'}`}>
-                {totalDispatched.toLocaleString()} / {product.target_qty!.toLocaleString()} pcs ({dispatchPct}%)
-              </span>
-            </div>
-            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  dispatchPct >= 100 ? 'bg-green-500' : dispatchPct >= 60 ? 'bg-sky-500' : 'bg-blue-400'
-                }`}
-                style={{ width: `${dispatchPct}%` }}
-              />
-            </div>
-          </div>
+      {/* Info strip */}
+      <div className={`bg-white rounded-md border border-slate-200 shadow-sm px-4 py-3 flex flex-wrap gap-6 items-center`}>
+        {product.image_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={product.image_url} alt="" className="w-12 h-12 rounded object-cover border border-slate-200 shrink-0" />
         )}
-
-        </BentoCard>
-
-        {/* Stage progress bar */}
-        <BentoCard className="col-span-full pb-8">
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-6">Production Pipeline Stage</h3>
-          <div className="flex items-center">
-            {PRODUCT_STAGES.map((stage, i) => {
-              const done = i < stageIdx
-              const current = i === stageIdx
-              return (
-                <div key={stage} className="flex items-center flex-1 last:flex-none">
-                  <div className="flex flex-col items-center min-w-0">
-                    {done
-                      ? <CheckCircle2 className="h-6 w-6 text-green-500 shrink-0" />
-                      : current
-                      ? <div className="h-6 w-6 rounded-full border-2 border-blue-500 bg-blue-100 animate-pulse shrink-0" />
-                      : <Circle className="h-6 w-6 text-slate-300 shrink-0" />
-                    }
-                    <span className={`text-[10px] mt-1 font-medium text-center ${current ? 'text-blue-600' : done ? 'text-green-600' : 'text-slate-400'}`}>
-                      {stage}
-                    </span>
-                  </div>
-                  {i < PRODUCT_STAGES.length - 1 && (
-                    <div className={`h-1 flex-1 mx-2 mb-4 rounded-full ${done ? 'bg-green-400' : 'bg-slate-100'}`} />
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </BentoCard>
-      </BentoGrid>
-
-      {/* Stage tabs — numbered steps */}
-      <BentoCard noPadding className="bg-slate-50/50">
-        <div className="p-6">
-          <div className="mb-4">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Production Steps</p>
-            <p className="text-xs text-slate-500">Follow the steps in order. The current stage is highlighted. Fill in the details for the active step, then move on.</p>
-          </div>
-          <Tabs defaultValue={currentStage.toLowerCase() === 'dispatched' ? 'dispatch' : currentStage.toLowerCase()}>
-            <TabsList className="w-full grid grid-cols-7 bg-white border shadow-sm gap-0 p-0 h-auto rounded-lg">
-              {([
-                { value: 'cutting',  label: 'Cutting',  step: 1, stage: 'Cutting' },
-                { value: 'printing', label: 'Printing', step: 2, stage: 'Printing' },
-                { value: 'sewing',   label: 'Sewing',   step: 3, stage: 'Sewing' },
-                { value: 'qc',       label: 'QC Check', step: 4, stage: 'QC' },
-                { value: 'finishing',label: 'Finishing', step: 5, stage: 'Finishing' },
-                { value: 'dispatch', label: 'Dispatch', step: 6, stage: 'Dispatched' },
-                { value: 'stock',    label: 'Stock',    step: 7, stage: null },
-              ] as const).map(({ value, label, step, stage }) => {
-                const isCurrent = stage ? currentStage === stage : false
-                const isDone = stage ? PRODUCT_STAGES.indexOf(currentStage) > PRODUCT_STAGES.indexOf(stage as ProductStage) : false
-                return (
-                  <TabsTrigger
-                    key={value}
-                    value={value}
-                    className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-none first:rounded-l-lg last:rounded-r-lg border-r last:border-r-0 border-slate-100 min-w-[70px] text-center data-[state=active]:shadow-none data-[state=active]:bg-blue-50 ${isCurrent ? 'data-[state=active]:bg-blue-50' : ''}`}
-                  >
-                    <span className={`text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center ${
-                      isDone ? 'bg-green-500 text-white' :
-                      isCurrent ? 'bg-blue-600 text-white animate-pulse' :
-                      'bg-slate-200 text-slate-500'
-                    }`}>{isDone ? '✓' : step}</span>
-                    <span className={`text-[11px] font-medium ${isCurrent ? 'text-blue-700' : isDone ? 'text-green-700' : 'text-slate-500'}`}>{label}</span>
-                  </TabsTrigger>
-                )
-              })}
-            </TabsList>
-
-            <div className="bg-white rounded-xl border shadow-sm mt-4">
-              <TabsContent value="cutting" className="m-0">
-                <div className="px-5 pt-4 pb-1 border-b border-slate-100">
-                  <p className="text-xs text-slate-500">Enter the fabric cutting details — color names, quantities per color, start date, and total weight. This is the <strong>first step</strong> in production.</p>
-                </div>
-                <CuttingTab productId={product.id} productCode={product.product_code} productName={product.product_name} onStageChange={handleStageChange} />
-              </TabsContent>
-              <TabsContent value="printing" className="m-0">
-                <div className="px-5 pt-4 pb-1 border-b border-slate-100">
-                  <p className="text-xs text-slate-500">Record the printing or embroidery vendor, how many pieces were sent out, and how many came back. <strong>Quantities marked auto-synced are filled automatically</strong> from your daily entries.</p>
-                </div>
-                <PrintingTab productId={product.id} productCode={product.product_code} productName={product.product_name} onStageChange={handleStageChange} hasLinkedEntries={dailyActivity.length > 0} />
-              </TabsContent>
-              <TabsContent value="sewing" className="m-0">
-                <div className="px-5 pt-4 pb-1 border-b border-slate-100">
-                  <p className="text-xs text-slate-500">Track the sewing vendor, sending date, and how many pieces went out vs came back. Short quantity means pieces that didn&apos;t return.</p>
-                </div>
-                <SewingTab productId={product.id} productCode={product.product_code} productName={product.product_name} onStageChange={handleStageChange} hasLinkedEntries={dailyActivity.length > 0} />
-              </TabsContent>
-              <TabsContent value="qc" className="m-0">
-                <div className="px-5 pt-4 pb-1 border-b border-slate-100">
-                  <p className="text-xs text-slate-500">Record quality check results — how many pieces passed, were rejected, or need alteration. Only <strong>passed</strong> pieces move to Finishing.</p>
-                </div>
-                <QCTab productId={product.id} productCode={product.product_code} productName={product.product_name} onStageChange={handleStageChange} hasLinkedEntries={dailyActivity.length > 0} />
-              </TabsContent>
-              <TabsContent value="finishing" className="m-0">
-                <div className="px-5 pt-4 pb-1 border-b border-slate-100">
-                  <p className="text-xs text-slate-500">Track pieces through ironing, folding, and final packing. Once all pieces are <strong>Dispatch Ready</strong>, the product is ready to be sent to branches.</p>
-                </div>
-                <FinishingTab productId={product.id} productCode={product.product_code} productName={product.product_name} onStageChange={handleStageChange} hasLinkedEntries={dailyActivity.length > 0} />
-              </TabsContent>
-              <TabsContent value="dispatch" className="m-0">
-                <div className="px-5 pt-4 pb-1 border-b border-slate-100">
-                  <p className="text-xs text-slate-500">Enter how many pieces were sent to each branch and on which date. You can record up to 3 separate dispatch batches per branch.</p>
-                </div>
-                <DispatchTab productId={product.id} productCode={product.product_code} productName={product.product_name} onTotalChange={setTotalDispatched} onStageChange={s => setCurrentStage(s as ProductStage)} />
-              </TabsContent>
-              <TabsContent value="stock" className="m-0">
-                <div className="px-5 pt-4 pb-1 border-b border-slate-100">
-                  <p className="text-xs text-slate-500">Record any remaining unsold pieces by color. Stock is what stays in the warehouse after dispatch.</p>
-                </div>
-                <StockTab productId={product.id} />
-              </TabsContent>
+        <div className="flex flex-wrap gap-6 flex-1">
+          {product.production_start_date && (
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">Start Date</p>
+              <p className="text-[13px] font-semibold text-slate-700">{formatDate(product.production_start_date)}</p>
             </div>
-          </Tabs>
+          )}
+          {product.target_qty && (
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">Target Qty</p>
+              <p className="text-[13px] font-semibold text-slate-700 tabular-nums">{product.target_qty.toLocaleString()} pcs</p>
+            </div>
+          )}
+          {product.target_dispatch_date && (
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">Dispatch Target</p>
+              <p className={`text-[13px] font-semibold tabular-nums ${isAtRisk ? 'text-red-600' : 'text-slate-700'}`}>{formatDate(product.target_dispatch_date)}</p>
+            </div>
+          )}
+          {dispatchPct !== null && (
+            <div className="min-w-[140px]">
+              <div className="flex justify-between text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400 mb-1">
+                <span>Dispatch Progress</span>
+                <span className="tabular-nums">{dispatchPct}%</span>
+              </div>
+              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${dispatchPct >= 100 ? 'bg-green-500' : dispatchPct >= 60 ? 'bg-sky-500' : 'bg-blue-400'}`}
+                  style={{ width: `${dispatchPct}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-slate-500 mt-0.5 tabular-nums">{totalDispatched.toLocaleString()} / {product.target_qty!.toLocaleString()}</p>
+            </div>
+          )}
         </div>
-      </BentoCard>
+        {product.notes && <p className="w-full text-[11px] text-slate-400 italic border-t border-slate-100 pt-2 mt-1">{product.notes}</p>}
+      </div>
 
-      {/* Daily production activity — below stage tabs */}
-      <BentoCard noPadding>
-        <div className="p-6 pb-0">
-          <h3 className="text-sm font-semibold text-slate-700 mb-1">Daily Activity Log</h3>
-          <p className="text-xs text-slate-400 mb-4">All activity logged from the Product Tracker for this product — updates to stages, quantities, and dispatches appear here automatically.</p>
+      {/* Ultra-Compact Flex Tab-Cards */}
+      <div className="flex w-full gap-2 pb-2 overflow-x-auto hide-scrollbar">
+        {TAB_STAGES.map(({ value, label, step, stage, rail }) => {
+          const isActive = activeTab === value
+          const isCurrent = stage ? currentStage === stage : false
+          const isDone = stage ? PRODUCT_STAGES.indexOf(currentStage) > PRODUCT_STAGES.indexOf(stage as ProductStage) : false
+
+          return (
+            <div 
+              key={value} 
+              onClick={() => setActiveTab(value)}
+              className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 px-2 py-2 bg-white rounded-md border cursor-pointer transition-all duration-200 select-none ${isActive ? `border-slate-300 shadow-sm ring-1 ${rail.replace('bg-', 'ring-')}` : 'border-slate-200 shadow-sm opacity-70 hover:opacity-100'}`}
+            >
+              <span className={`text-[10px] font-bold rounded flex shrink-0 items-center justify-center w-5 h-5 ${isDone ? 'bg-green-100 text-green-700' : isCurrent ? `${rail} text-white` : 'bg-slate-100 text-slate-500'}`}>
+                {isDone ? <Check className="w-3 h-3" /> : step}
+              </span>
+              <span className={`text-[12px] font-bold truncate ${isActive ? 'text-slate-800' : 'text-slate-600'}`}>{label}</span>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Tab Content Area */}
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+          <h3 className="text-sm font-bold text-slate-700">Stage Details</h3>
+        </div>
+        <div className="p-5">
+          {activeTab === 'cutting' && <CuttingTab productId={product.id} productCode={product.product_code} productName={product.product_name} onStageChange={handleStageChange} />}
+          {activeTab === 'printing' && <PrintingTab productId={product.id} productCode={product.product_code} productName={product.product_name} onStageChange={handleStageChange} />}
+          {activeTab === 'sewing' && <SewingTab productId={product.id} productCode={product.product_code} productName={product.product_name} onStageChange={handleStageChange} />}
+          {activeTab === 'qc' && <QCTab productId={product.id} productCode={product.product_code} productName={product.product_name} onStageChange={handleStageChange} />}
+          {activeTab === 'finishing' && <FinishingTab productId={product.id} productCode={product.product_code} productName={product.product_name} onStageChange={handleStageChange} />}
+          {activeTab === 'dispatch' && <DispatchTab productId={product.id} productCode={product.product_code} productName={product.product_name} onTotalChange={setTotalDispatched} onStageChange={s => setCurrentStage(s as ProductStage)} />}
+          {activeTab === 'stock' && <StockTab productId={product.id} />}
+        </div>
+      </div>
+
+      {/* Daily activity log */}
+      <div className="bg-white rounded-lg border border-slate-200 shadow-card">
+        <div className="px-4 py-3 border-b border-slate-100">
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Daily Activity Log</p>
         </div>
         <ProductActivityPanel rows={dailyActivity} />
-      </BentoCard>
+      </div>
     </div>
   )
 }

@@ -41,7 +41,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
       <Card className="w-full max-w-sm shadow-lg">
         <CardHeader className="text-center space-y-1">
-          <div className="text-2xl font-bold text-[#1A3557]">Bindu Premium</div>
+          <div className="text-2xl font-bold text-[#0D1F35]">Bindu Premium</div>
           <CardTitle className="text-lg font-medium text-slate-600">Production Tracker</CardTitle>
         </CardHeader>
         <CardContent>
@@ -67,7 +67,7 @@ export default function LoginPage() {
               />
               {errors.password && <p className="text-red-500 text-xs">{errors.password.message}</p>}
             </div>
-            <Button type="submit" className="w-full bg-[#1A3557] hover:bg-[#142a45]" disabled={isSubmitting}>
+            <Button type="submit" className="w-full bg-[#0D1F35] hover:bg-[#0D1F35]" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign In
             </Button>

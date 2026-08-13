@@ -8,7 +8,6 @@ import TodaySummary from '@/components/dashboard/TodaySummary'
 import MonthlyTotals from '@/components/dashboard/MonthlyTotals'
 import WeeklyTrendChart from '@/components/dashboard/WeeklyTrendChart'
 import AtRiskPanel from '@/components/dashboard/AtRiskPanel'
-import { BentoGrid } from '@/components/shared/BentoGrid'
 import { BentoCard } from '@/components/shared/BentoCard'
 import type { MonthlySummaryAgg } from '@/components/dashboard/MonthlyTotals'
 import type { WeekPoint } from '@/components/dashboard/WeeklyTrendChart'
@@ -45,7 +44,6 @@ export default async function DashboardPage() {
 
   const allProducts = productsRes.data ?? []
 
-  // Stage counts
   const stageCounts: Record<string, number> = {}
   for (const p of allProducts) {
     stageCounts[p.current_stage] = (stageCounts[p.current_stage] ?? 0) + 1
@@ -58,7 +56,6 @@ export default async function DashboardPage() {
     return diff >= STALE_DAYS
   }).length
 
-  // Monthly aggregates
   const monthRows = monthlyRes.data ?? []
   const n = (key: string) => monthRows.reduce((s, r) => s + (Number(r[key]) || 0), 0)
   const monthly: MonthlySummaryAgg | null = monthRows.length === 0 ? null : {
@@ -78,8 +75,7 @@ export default async function DashboardPage() {
   const totalDispatched = (monthly?.total_retail ?? 0) + (monthly?.total_wholesale ?? 0)
   const totalCut = monthly?.total_cutting ?? 0
   const cutToShip = totalCut > 0 ? Math.round((totalDispatched / totalCut) * 100) : 0
-
-  const totalQcIn = n('total_qc_received') || n('total_qc_output') + n('total_reject')
+  const totalQcIn = n('total_qc_received') || (n('total_qc_output') + n('total_reject'))
   const rejectRate = totalQcIn > 0
     ? ((n('total_reject') / totalQcIn) * 100).toFixed(1) + '%'
     : '—'
@@ -87,7 +83,6 @@ export default async function DashboardPage() {
   const todayEntries = (todayRes.data ?? []) as ProductionEntry[]
   const atRiskProducts = (atRiskRes.data ?? []) as AtRiskProduct[]
 
-  // Build weekly trend — bucket each entry_date into its Mon-start ISO week
   const weekMap = new Map<string, WeekPoint>()
   for (const row of trendRes.data ?? []) {
     const d = new Date(row.entry_date)
@@ -105,43 +100,43 @@ export default async function DashboardPage() {
     .map(([, v]) => v)
 
   return (
-    <div className="space-y-8 max-w-7xl">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+    <div className="max-w-7xl space-y-6 pb-12">
+      {/* Page header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-xl font-semibold text-slate-800">Production Dashboard</h2>
-          <p className="text-sm text-slate-500 mt-0.5">{format(new Date(), 'EEEE, dd MMMM yyyy')}</p>
+          <h2 className="text-2xl font-black text-foreground tracking-tight">Production Command Center</h2>
+          <p className="text-sm font-medium text-muted-foreground mt-1">{format(new Date(), 'EEEE, dd MMMM yyyy')}</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/dashboard/daily" className="px-3 py-1.5 text-xs font-medium bg-white border rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+          <Link href="/dashboard/daily" className="px-4 py-2 text-xs font-bold bg-white border border-border/80 rounded-lg text-slate-700 hover:bg-slate-50 hover:border-border transition-all shadow-sm hover:shadow">
             Daily Entry →
           </Link>
-          <Link href="/dashboard/pipeline" className="px-3 py-1.5 text-xs font-medium bg-white border rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+          <Link href="/dashboard/pipeline" className="px-4 py-2 text-xs font-bold bg-white border border-border/80 rounded-lg text-slate-700 hover:bg-slate-50 hover:border-border transition-all shadow-sm hover:shadow">
             Pipeline →
           </Link>
-          <Link href="/dashboard/products" className="px-3 py-1.5 text-xs font-medium bg-[#1A3557] text-white rounded-lg hover:bg-[#142a45] transition-colors">
-            All Products →
+          <Link href="/dashboard/products/new" className="px-4 py-2 text-xs font-bold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-sm hover:shadow hover:-translate-y-0.5">
+            + New Product
           </Link>
         </div>
       </div>
 
-      {/* Quick-start guide — shown only when no products exist */}
+      {/* Quick-start guide */}
       {allProducts.length === 0 && (
-        <div className="rounded-xl bg-blue-50 border border-blue-200 p-5 space-y-3">
-          <p className="font-semibold text-blue-800 text-sm">Welcome! Here&apos;s how to get started</p>
+        <div className="rounded-xl bg-blue-50 border border-blue-200 p-5 space-y-4">
+          <p className="font-bold text-blue-900 text-sm">Get started with Bindu Tracker</p>
           <ol className="space-y-2">
             {[
-              { step: 1, title: 'Add a Product', desc: 'Go to Products → New Product. Enter the design code, name, target quantity, and dispatch date.', href: '/dashboard/products/new', cta: 'Add your first product →' },
-              { step: 2, title: 'Fill in Cutting Details', desc: 'Open the product and go to Step 1 — Cutting. Enter color names and quantities cut.', href: null, cta: null },
-              { step: 3, title: 'Record Daily Work', desc: 'Each day, go to Daily Entry, select your branch, and fill in today\'s numbers for each design code.', href: '/dashboard/daily', cta: 'Open Daily Entry →' },
+              { step: 1, title: 'Add a Product', desc: 'Go to Products → New Product. Enter the design code, name, and target dispatch date.', href: '/dashboard/products/new', cta: 'Add your first product →' },
+              { step: 2, title: 'Fill in Cutting Details', desc: 'Open the product and fill in Step 1 — Cutting with color names and quantities.', href: null, cta: null },
+              { step: 3, title: 'Record Daily Work', desc: 'Each day, go to Daily Logs and fill in today\'s numbers for each design code.', href: '/dashboard/daily', cta: 'Open Daily Logs →' },
               { step: 4, title: 'Track Progress', desc: 'Use Pipeline to see all active designs and their current stage at a glance.', href: '/dashboard/pipeline', cta: 'Open Pipeline →' },
             ].map(({ step, title, desc, href, cta }) => (
-              <li key={step} className="flex items-start gap-3 text-sm text-blue-700">
-                <span className="mt-0.5 flex-shrink-0 font-bold bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">{step}</span>
+              <li key={step} className="flex items-start gap-3 text-sm text-blue-800">
+                <span className="mt-0.5 shrink-0 font-bold bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow-sm">{step}</span>
                 <span>
                   <strong>{title}:</strong> {desc}
                   {href && cta && (
-                    <Link href={href} className="ml-2 underline font-medium text-blue-800 hover:text-blue-900">{cta}</Link>
+                    <Link href={href} className="ml-2 underline font-semibold text-blue-900 hover:text-blue-950">{cta}</Link>
                   )}
                 </span>
               </li>
@@ -150,63 +145,63 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* At-risk alert panel */}
+      {/* At-risk alert */}
       {atRiskProducts.length > 0 && (
-        <div className="mb-8">
+        <div className="animate-fade-up" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
           <AtRiskPanel products={atRiskProducts} />
         </div>
       )}
 
-      <BentoGrid className="mb-8">
-        {/* KPI Row 1 — production volumes */}
-        <div className="col-span-full">
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">This Month — {format(new Date(), 'MMMM yyyy')}</p>
+      {/* KPI section — This Month */}
+      <div className="animate-fade-up" style={{ animationDelay: '150ms', animationFillMode: 'both' }}>
+        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-3 px-1">
+          {format(new Date(), 'MMMM yyyy')} — Production Volumes
+        </p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KPICard title="Cut" value={totalCut} icon={Scissors} color="blue" sub="pieces cut" />
-          <KPICard title="Finished" value={monthly?.total_finished ?? 0} icon={CheckSquare2} color="purple" sub="pieces finished" />
-          <KPICard title="Dispatched" value={totalDispatched} icon={Truck} color="sky" sub="retail + wholesale" />
-          <KPICard title="Cut-to-Ship" value={cutToShip + '%'} icon={TrendingDown} color="teal" sub="dispatched / cut" />
+          <KPICard title="Cut This Month" value={totalCut} icon={<Scissors />} color="blue" sub="pieces cut" />
+          <KPICard title="Finished" value={monthly?.total_finished ?? 0} icon={<CheckSquare2 />} color="purple" sub="pieces finished" />
+          <KPICard title="Dispatched" value={totalDispatched} icon={<Truck />} color="sky" sub="retail + wholesale" />
+          <KPICard title="Cut-to-Ship" value={cutToShip + '%'} icon={<TrendingDown />} color="teal" sub="dispatched / cut" />
         </div>
-        </div>
+      </div>
 
-        {/* KPI Row 2 — pipeline health */}
-        <div className="col-span-full mt-4">
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Pipeline Health</p>
+      {/* Pipeline health KPIs */}
+      <div className="animate-fade-up" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
+        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-3 px-1">Pipeline Health</p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KPICard title="Total Products" value={totalProducts} icon={Package2} color="blue" sub="in system" />
-          <KPICard title="Active Designs" value={activeDesigns} icon={Activity} color="teal" sub="not completed" />
-          <KPICard title="Reject Rate" value={rejectRate} icon={TrendingDown} color="purple" sub="this month" />
-          <Link href="/dashboard/pipeline">
+          <KPICard title="Total Products" value={totalProducts} icon={<Package2 />} color="blue" sub="in system" />
+          <KPICard title="Active Designs" value={activeDesigns} icon={<Activity />} color="teal" sub="not completed" />
+          <KPICard title="Reject Rate" value={rejectRate} icon={<TrendingDown />} color={rejectRate !== '—' && parseFloat(rejectRate) > 5 ? 'red' : 'purple'} sub="this month" />
+          <Link href="/dashboard/pipeline" className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-light rounded-xl">
             <KPICard
               title="Stale Designs"
               value={staleProducts}
-              icon={AlertTriangle}
-              color="sky"
+              icon={<AlertTriangle />}
+              color={staleProducts > 0 ? 'amber' : 'sky'}
               sub={`no update in ${STALE_DAYS}+ days`}
             />
           </Link>
         </div>
-        </div>
+      </div>
 
-        {/* Stage count grid */}
-        <BentoCard className="col-span-full xl:col-span-2">
+      {/* Pipeline flow + Trend chart */}
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-5 animate-fade-up" style={{ animationDelay: '250ms', animationFillMode: 'both' }}>
+        <BentoCard className="xl:col-span-3">
           <StageCountGrid counts={stageCounts} />
         </BentoCard>
-
-        {/* Weekly trend chart */}
-        <BentoCard className="col-span-full xl:col-span-2 flex flex-col justify-center">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-4">Weekly Trend — last 8 weeks</p>
-          <WeeklyTrendChart data={trendData} />
+        <BentoCard className="xl:col-span-2 flex flex-col justify-center">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-4">Weekly Trend — last 8 weeks</p>
+          <div className="-mx-2 h-[220px]">
+            <WeeklyTrendChart data={trendData} />
+          </div>
         </BentoCard>
-      </BentoGrid>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-        {/* Today's summary */}
-        <BentoCard>
+      {/* Today's summary + Monthly totals */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 animate-fade-up" style={{ animationDelay: '300ms', animationFillMode: 'both' }}>
+        <BentoCard className="p-0 overflow-hidden">
           <TodaySummary entries={todayEntries} />
         </BentoCard>
-
-        {/* Monthly totals */}
         <BentoCard>
           <MonthlyTotals data={monthly} />
         </BentoCard>

@@ -9,10 +9,10 @@ interface BentoCardProps {
 
 export function BentoCard({ children, className, noPadding = false }: BentoCardProps) {
   return (
-    <div 
+    <div
       className={cn(
-        "bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden flex flex-col transition-shadow hover:shadow-md",
-        !noPadding && "p-6",
+        "bg-white rounded-lg border border-slate-200 shadow-card overflow-hidden flex flex-col",
+        !noPadding && "p-5",
         className
       )}
     >

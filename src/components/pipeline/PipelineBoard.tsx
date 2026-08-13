@@ -4,17 +4,21 @@ import { createClient } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { Download, AlertCircle } from 'lucide-react'
+import { Download, AlertCircle, ArrowUpRight } from 'lucide-react'
 import Link from 'next/link'
 import { formatDistanceToNow, parseISO } from 'date-fns'
 import { exportToExcel } from '@/lib/utils/exportExcel'
+import { useRouter } from 'next/navigation'
 import type { ProductStage } from '@/types/app'
 
-const STAGE_COLORS: Record<ProductStage, string> = {
-  Cutting: 'bg-blue-100 text-blue-700', Printing: 'bg-teal-100 text-teal-700',
-  Sewing: 'bg-orange-100 text-orange-700', QC: 'bg-green-100 text-green-700',
-  Finishing: 'bg-purple-100 text-purple-700', Dispatched: 'bg-sky-100 text-sky-700',
-  Completed: 'bg-slate-100 text-slate-600',
+const STAGE_STYLES: Record<ProductStage, string> = {
+  Cutting:    'bg-blue-50 text-blue-700 border-blue-200/60',
+  Printing:   'bg-teal-50 text-teal-700 border-teal-200/60',
+  Sewing:     'bg-orange-50 text-orange-700 border-orange-200/60',
+  QC:         'bg-green-50 text-green-700 border-green-200/60',
+  Finishing:  'bg-purple-50 text-purple-700 border-purple-200/60',
+  Dispatched: 'bg-sky-50 text-sky-700 border-sky-200/60',
+  Completed:  'bg-slate-50 text-slate-600 border-slate-200/60',
 }
 
 type Row = {
@@ -23,10 +27,11 @@ type Row = {
   qc_reject_qty: number | null; stock_total: number | null; total_dispatched: number | null
 }
 
-const STALE_DAYS = 3
+const STALE_DAYS = 7
 
 export default function PipelineBoard() {
   const supabase = createClient()
+  const router = useRouter()
   const [rows, setRows] = useState<Row[]>([])
   const [loading, setLoading] = useState(true)
   const [staleOnly, setStaleOnly] = useState(false)
@@ -62,88 +67,143 @@ export default function PipelineBoard() {
     Stale: isStale(r) ? 'YES' : 'no',
   })))
 
-  const th = 'px-3 py-2 text-xs font-semibold text-slate-600 whitespace-nowrap text-left'
-  const td = 'px-3 py-2 text-xs text-slate-700 whitespace-nowrap align-middle'
+  const th = 'px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap text-left sticky top-0 bg-slate-50/95 backdrop-blur-sm shadow-[0_1px_0_0_rgba(0,0,0,0.05)] z-10 transition-colors'
+  const td = 'px-4 py-3 text-sm text-foreground whitespace-nowrap align-middle'
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <p className="text-sm text-slate-500">
-            <span className="font-semibold text-slate-700">{rows.length}</span> active designs
-            {staleCount > 0 && (
-              <span className="ml-3 text-red-600 font-medium flex items-center gap-1 inline-flex">
-                <AlertCircle className="h-3.5 w-3.5" />
-                {staleCount} stale (&gt;{STALE_DAYS} days)
-              </span>
-            )}
-          </p>
+      {/* Toolbar */}
+      <div className="flex items-center justify-between flex-wrap gap-4 bg-white/50 p-3 rounded-xl border border-border/50">
+        <div className="flex items-center gap-4 flex-wrap px-1">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-black text-foreground tabular-nums bg-primary/10 text-primary px-2 py-0.5 rounded-md">{rows.length}</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">active designs</span>
+          </div>
           {staleCount > 0 && (
-            <button
-              onClick={() => setStaleOnly(!staleOnly)}
-              className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${staleOnly ? 'bg-red-600 text-white' : 'bg-red-50 text-red-600 border border-red-200'}`}>
-              {staleOnly ? 'Show All' : 'Show Stale Only'}
-            </button>
+            <>
+              <div className="h-4 w-px bg-border/60 hidden sm:block" />
+              <button
+                onClick={() => setStaleOnly(!staleOnly)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all shadow-sm ${
+                  staleOnly
+                    ? 'bg-amber-500 text-white shadow-amber-500/20'
+                    : 'bg-white text-amber-700 border border-amber-200 hover:bg-amber-50 hover:border-amber-300 hover:shadow-md'
+                }`}
+              >
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                {staleCount} stale (&gt;{STALE_DAYS}d)
+                <span className="opacity-70 font-medium ml-1">{staleOnly ? '— show all' : ''}</span>
+              </button>
+            </>
           )}
         </div>
-        <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleExport} disabled={filtered.length === 0}>
-          <Download className="h-3 w-3" /> Export Excel
+        <Button size="sm" variant="outline" className="h-8 text-xs gap-2 font-bold bg-white" onClick={handleExport} disabled={filtered.length === 0}>
+          <Download className="h-3.5 w-3.5" /> Export Excel
         </Button>
       </div>
 
-      <div className="rounded-lg border bg-white overflow-x-auto shadow-sm">
-        <table className="w-full border-collapse min-w-max">
-          <thead>
-            <tr className="bg-slate-50 border-b">
-              <th className={th}>Code</th>
-              <th className={th}>Name</th>
-              <th className={th}>Current Stage</th>
-              <th className={th + ' text-right text-blue-600'}>Total Cut</th>
-              <th className={th + ' text-right text-green-600'}>Passed QC</th>
-              <th className={th + ' text-right text-red-600'}>Reject %</th>
-              <th className={th + ' text-right text-sky-600'}>Dispatched</th>
-              <th className={th + ' text-right'}>Stock</th>
-              <th className={th}>Last Updated</th>
-              <th className={th}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading
-              ? Array.from({length:6}).map((_,i)=><tr key={i}><td colSpan={10} className="p-2"><Skeleton className="h-7 w-full"/></td></tr>)
-              : filtered.length === 0
-              ? <tr><td colSpan={10} className="p-8 text-center text-sm text-slate-400">
-                  {staleOnly ? 'No stale products' : 'No active designs — all are completed'}
-                </td></tr>
-              : filtered.map((r, i) => {
-                const stale = isStale(r)
-                return (
-                  <tr key={r.id} className={`border-b cursor-pointer ${stale ? 'bg-red-50/40' : i%2===0 ? 'bg-white' : 'bg-slate-50'} hover:bg-blue-50/50 transition-colors`}>
-                    <td className={td + ' font-mono font-medium text-[#1A3557]'}>{r.product_code}</td>
-                    <td className={td}>{r.product_name}</td>
-                    <td className={td}>
-                      <Badge variant="secondary" className={`text-xs ${STAGE_COLORS[r.current_stage]}`}>{r.current_stage}</Badge>
-                    </td>
-                    <td className={td + ' text-right text-blue-700 font-medium'}>{r.cutting_total_qty?.toLocaleString() ?? '—'}</td>
-                    <td className={td + ' text-right text-green-700'}>{r.qc_out_qty?.toLocaleString() ?? '—'}</td>
-                    <td className={td + ' text-right text-red-600 font-medium'}>{rejectRate(r) ?? '—'}</td>
-                    <td className={td + ' text-right text-sky-700 font-semibold'}>{r.total_dispatched ? r.total_dispatched.toLocaleString() : '—'}</td>
-                    <td className={td + ' text-right'}>{r.stock_total?.toLocaleString() ?? '—'}</td>
-                    <td className={td}>
-                      <span className={`flex items-center gap-1 ${stale ? 'text-red-600 font-medium' : 'text-slate-400'}`}>
-                        {stale && <AlertCircle className="h-3 w-3 shrink-0" />}
-                        {formatDistanceToNow(parseISO(r.updated_at), { addSuffix: true })}
-                      </span>
-                    </td>
-                    <td className={td}>
-                      <Link href={`/dashboard/products/${r.id}`} className="text-xs text-[#1A3557] hover:underline font-medium">View →</Link>
+      {/* Table */}
+      <div className="bg-white rounded-xl border border-border/80 overflow-hidden shadow-sm flex flex-col max-h-[600px]">
+        <div className="overflow-x-auto overflow-y-auto flex-1">
+          <table className="w-full border-collapse min-w-max relative">
+            <thead>
+              <tr>
+                <th className={`${th} shadow-[1px_1px_0_0_rgba(0,0,0,0.05)] sticky left-0 z-20 w-[120px]`}>Code</th>
+                <th className={th}>Name</th>
+                <th className={th}>Stage</th>
+                <th className={th + ' text-right'} style={{ color: '#2563EB' }}>Cut</th>
+                <th className={th + ' text-right'} style={{ color: '#16A34A' }}>QC Pass</th>
+                <th className={th + ' text-right'} style={{ color: '#DC2626' }}>Reject %</th>
+                <th className={th + ' text-right'} style={{ color: '#0EA5E9' }}>Dispatched</th>
+                <th className={th + ' text-right'}>Stock</th>
+                <th className={th}>Last Updated</th>
+                <th className={th}></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/40">
+              {loading
+                ? Array.from({ length: 8 }).map((_, i) => (
+                    <tr key={i}>
+                      <td colSpan={10} className="p-4">
+                        <Skeleton className="h-8 w-full rounded-md" />
+                      </td>
+                    </tr>
+                  ))
+                : filtered.length === 0
+                ? (
+                  <tr>
+                    <td colSpan={10} className="py-24 text-center">
+                      <p className="text-sm font-semibold text-muted-foreground bg-muted/30 py-4 px-6 rounded-lg inline-block border border-dashed border-border/60">
+                        {staleOnly ? 'No stale products — all up to date' : 'No active designs — all completed'}
+                      </p>
                     </td>
                   </tr>
                 )
-              })
-            }
-          </tbody>
-        </table>
+                : filtered.map(r => {
+                    const stale = isStale(r)
+                    const rate = rejectRate(r)
+                    const rateNum = rate ? parseFloat(rate) : 0
+                    return (
+                      <tr
+                        key={r.id}
+                        onClick={() => router.push(`/dashboard/products/${r.id}`)}
+                        className={`group transition-all duration-200 cursor-pointer ${
+                          stale ? 'bg-amber-50/30 hover:bg-amber-50/80' : 'hover:bg-slate-50'
+                        }`}
+                      >
+                        <td className={`${td} font-mono font-bold text-foreground shadow-[1px_0_0_0_rgba(0,0,0,0.05)] sticky left-0 z-10 transition-colors ${stale ? 'bg-amber-50/50 group-hover:bg-amber-100/50' : 'bg-white group-hover:bg-slate-50'}`}>
+                          {r.product_code}
+                        </td>
+                        <td className={`${td} max-w-[180px] truncate font-medium text-slate-600`}>{r.product_name}</td>
+                        <td className={td}>
+                          <Badge variant="outline" className={`text-[10px] font-bold px-2 py-0.5 border ${STAGE_STYLES[r.current_stage]}`}>
+                            {r.current_stage}
+                          </Badge>
+                        </td>
+                        <td className={`${td} text-right font-bold text-blue-600 tabular-nums`}>
+                          {r.cutting_total_qty?.toLocaleString() ?? '—'}
+                        </td>
+                        <td className={`${td} text-right font-bold text-green-600 tabular-nums`}>
+                          {r.qc_out_qty?.toLocaleString() ?? '—'}
+                        </td>
+                        <td className={`${td} text-right tabular-nums font-bold ${rateNum > 5 ? 'text-red-600' : rateNum > 0 ? 'text-orange-600' : 'text-slate-400'}`}>
+                          {rate ?? '—'}
+                        </td>
+                        <td className={`${td} text-right font-bold text-sky-600 tabular-nums`}>
+                          {r.total_dispatched ? r.total_dispatched.toLocaleString() : '—'}
+                        </td>
+                        <td className={`${td} text-right tabular-nums font-medium text-slate-500`}>
+                          {r.stock_total?.toLocaleString() ?? '—'}
+                        </td>
+                        <td className={td}>
+                          <span className={`flex items-center gap-1.5 text-xs font-medium ${stale ? 'text-amber-600' : 'text-slate-400'}`}>
+                            {stale && <AlertCircle className="h-3.5 w-3.5 shrink-0" />}
+                            {formatDistanceToNow(parseISO(r.updated_at), { addSuffix: true })}
+                          </span>
+                        </td>
+                        <td className={td}>
+                          <Link
+                            href={`/dashboard/products/${r.id}`}
+                            onClick={e => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-[11px] uppercase tracking-wider font-bold text-primary hover:text-primary/80 transition-colors opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 duration-200"
+                          >
+                            Open <ArrowUpRight className="h-3 w-3" />
+                          </Link>
+                        </td>
+                      </tr>
+                    )
+                  })
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {!loading && filtered.length > 0 && (
+        <p className="text-xs font-bold text-slate-400 text-right tabular-nums tracking-wide">
+          SHOWING {filtered.length} OF {rows.length} ACTIVE DESIGN{rows.length !== 1 ? 'S' : ''}
+        </p>
+      )}
     </div>
   )
 }

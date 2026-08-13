@@ -72,7 +72,7 @@ export default function DesignProgressReport() {
         <div className="flex gap-1 flex-wrap">
           {stages.map(s => (
             <button key={s} onClick={() => setStageFilter(s)}
-              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${stageFilter === s ? 'bg-[#1A3557] text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${stageFilter === s ? 'bg-[#0D1F35] text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
               {s === 'all' ? 'All Stages' : s}
             </button>
           ))}
@@ -107,7 +107,7 @@ export default function DesignProgressReport() {
                 </td></tr>
               : filtered.map((r, i) => (
                 <tr key={r.id} className={i%2===0 ? 'bg-white border-b border-slate-50' : 'bg-slate-50 border-b border-slate-100'}>
-                  <td className={td + ' font-mono font-medium text-[#1A3557]'}>{r.product_code}</td>
+                  <td className={td + ' font-mono font-medium text-[#0D1F35]'}>{r.product_code}</td>
                   <td className={td}>{r.product_name}</td>
                   <td className={td}><Badge variant="secondary" className={`text-xs ${STAGE_COLORS[r.current_stage]}`}>{r.current_stage}</Badge></td>
                   <td className={td + ' text-right font-medium'}>{r.cutting_total_qty ?? '—'}</td>
@@ -118,7 +118,7 @@ export default function DesignProgressReport() {
                   <td className={td + ' text-right text-red-600 font-medium'}>{rejectRate(r) ?? '—'}</td>
                   <td className={td + ' text-right text-sky-700 font-medium'}>{r.total_dispatched ?? '—'}</td>
                   <td className={td + ' text-right'}>{r.stock_total ?? '—'}</td>
-                  <td className={td}><Link href={`/dashboard/products/${r.id}`} className="text-xs text-[#1A3557] hover:underline">View →</Link></td>
+                  <td className={td}><Link href={`/dashboard/products/${r.id}`} className="text-xs text-[#0D1F35] hover:underline">View →</Link></td>
                 </tr>
               ))
             }

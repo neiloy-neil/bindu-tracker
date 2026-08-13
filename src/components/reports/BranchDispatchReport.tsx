@@ -91,7 +91,7 @@ export default function BranchDispatchReport({ range, selectedBranch, headerCont
       <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-2">
         {BRANCHES.map(b => (
           <button key={b} onClick={() => setBranchFilter(branchFilter === b ? 'All' : b)}
-            className={`rounded border p-2 text-left transition-all ${branchFilter === b ? 'border-[#1A3557] bg-blue-50' : 'border-slate-200 bg-white hover:bg-slate-50'}`}>
+            className={`rounded border p-2 text-left transition-all ${branchFilter === b ? 'border-[#0D1F35] bg-blue-50' : 'border-slate-200 bg-white hover:bg-slate-50'}`}>
             <p className="text-xs font-medium text-slate-700 truncate">{b}</p>
             <p className={`text-base font-bold mt-0.5 ${branchTotals[b] > 0 ? 'text-sky-600' : 'text-slate-300'}`}>
               {branchTotals[b]?.toLocaleString() ?? '0'}
@@ -128,7 +128,7 @@ export default function BranchDispatchReport({ range, selectedBranch, headerCont
               : filtered.map((r, i) => (
                 <tr key={i} className={i%2===0 ? 'bg-white border-b border-slate-50' : 'bg-slate-50 border-b border-slate-100'}>
                   <td className={td + ' font-medium'}>{r.branch_name}</td>
-                  <td className={td + ' font-mono text-[#1A3557]'}>{r.product_code}</td>
+                  <td className={td + ' font-mono text-[#0D1F35]'}>{r.product_code}</td>
                   <td className={td}>{r.dispatch_date ? format(parseISO(r.dispatch_date), 'dd MMM yyyy') : '—'}</td>
                   <td className={td + ' text-right'}>{r.dispatch_no}</td>
                   <td className="px-3 py-2 text-xs text-sky-700 text-right font-semibold">{r.qty.toLocaleString()}</td>
